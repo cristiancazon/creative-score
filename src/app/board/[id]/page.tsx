@@ -34,6 +34,13 @@ export default function BoardPage() {
     const [scale, setScale] = useState(1);
     const [localTimer, setLocalTimer] = useState(0);
 
+    // Ultra-safe comparison helper
+    const getStrId = (idInput: any) => {
+        if (!idInput) return "";
+        if (typeof idInput === 'object') return String(idInput.id || "");
+        return String(idInput);
+    };
+
     // Sync local timer with match state
     useEffect(() => {
         if (!match) return;
@@ -148,6 +155,18 @@ export default function BoardPage() {
                     } as Match);
                     setHomeTeam({ name: 'Lakers', primary_color: '#552583' } as any);
                     setAwayTeam({ name: 'Celtics', primary_color: '#007A33' } as any);
+                    // Fallback Generation
+                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
+                        id: `temp_${teamId}_${i + 4}`,
+                        name: `Player ${i + 4}`,
+                        number: i + 4,
+                        team: teamId,
+                        temp: true
+                    }));
+
+                    setHomePlayers(generateRoster('lakers'));
+                    setAwayPlayers(generateRoster('celtics'));
+
                     setLoading(false);
                 } catch (e) {
                     console.error("Preview load failed:", e);
@@ -159,31 +178,16 @@ export default function BoardPage() {
 
             // LIVE MODE: ID is Match ID
             try {
-                // Fetch Match with related Board and Teams
-                // We use type assertion because our SDK types might be simple, but query expands them
                 const matchData = await directus.request(readItem('matches', id as string, {
-                    fields: [
-                        '*',
-                        // @ts-ignore
-                        'home_team.*',
-                        // @ts-ignore
-                        'away_team.*',
-                        // @ts-ignore
-                        'board.*'
-                    ]
-                }));
+                    fields: ['*' as any, 'home_team.*' as any, 'away_team.*' as any, 'board.*' as any]
+                })) as any;
 
-                // @ts-ignore
                 setMatch(matchData);
-                // @ts-ignore
                 setHomeTeam(matchData.home_team);
-                // @ts-ignore
                 setAwayTeam(matchData.away_team);
 
                 // If match has a specific board assigned, use it. Otherwise use defaults.
-                // @ts-ignore
                 if (matchData.board) {
-                    // @ts-ignore
                     setBoardConfig(matchData.board);
                 } else {
                     // Fallback default config if no board selected
@@ -198,24 +202,18 @@ export default function BoardPage() {
                         show_player_stats: true,
                         background_color: '#000000',
                         text_color: '#ffffff',
-                        // @ts-ignore
                         primary_color_home: matchData.home_team?.primary_color || '#ef4444',
-                        // @ts-ignore
                         primary_color_away: matchData.away_team?.primary_color || '#3b82f6',
                         label_period: 'PERIOD',
                         label_fouls: 'FOULS'
-                    } as Board);
+                    } as any);
                 }
 
-                // Fetch Players
-                // @ts-ignore
-                if (matchData.home_team && matchData.away_team) {
-                    // @ts-ignore
-                    const homeId = typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team;
-                    // @ts-ignore
-                    const awayId = typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team;
+                // Robust ID Extraction
+                const homeId = matchData.home_team ? String(typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
+                const awayId = matchData.away_team ? String(typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
 
-                    // @ts-ignore
+                if (homeId && awayId) {
                     const playersData = await directus.request(readItems('players', {
                         filter: {
                             _or: [
@@ -224,15 +222,44 @@ export default function BoardPage() {
                             ]
                         },
                         limit: 100
+                    })) as any[];
+
+                    // Fallback Generation
+                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
+                        id: `temp_${teamId}_${i + 4}`,
+                        name: `Player ${i + 4}`,
+                        number: i + 4,
+                        team: teamId,
+                        temp: true
                     }));
 
-                    // @ts-ignore
-                    const hPlayers = playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === homeId).sort((a: any, b: any) => a.number - b.number);
-                    // @ts-ignore
-                    const aPlayers = playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === awayId).sort((a: any, b: any) => a.number - b.number);
+                    // String-safe local filtering
+                    const hReal = playersData.filter((p: any) => {
+                        const pTeamId = String(typeof p.team === 'object' ? p.team.id : p.team);
+                        return pTeamId === homeId;
+                    });
+                    const aReal = playersData.filter((p: any) => {
+                        const pTeamId = String(typeof p.team === 'object' ? p.team.id : p.team);
+                        return pTeamId === awayId;
+                    });
+
+                    const hPlayers = hReal.length > 0 ? hReal.sort((a: any, b: any) => a.number - b.number) : generateRoster(homeId);
+                    const aPlayers = aReal.length > 0 ? aReal.sort((a: any, b: any) => a.number - b.number) : generateRoster(awayId);
 
                     setHomePlayers(hPlayers);
                     setAwayPlayers(aPlayers);
+                }
+                else if (!matchData.home_team && !matchData.away_team) {
+                    // Even if no teams, generate something to avoid empty state if possible
+                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
+                        id: `temp_${teamId}_${i + 4}`,
+                        name: `Player ${i + 4}`,
+                        number: i + 4,
+                        team: teamId,
+                        temp: true
+                    }));
+                    setHomePlayers(generateRoster('home'));
+                    setAwayPlayers(generateRoster('away'));
                 }
 
                 setLoading(false);
@@ -329,6 +356,7 @@ export default function BoardPage() {
                         let content = null;
                         let extraStyle = {};
 
+
                         switch (el.type) {
                             case 'timer':
                                 content = formatTime(localTimer);
@@ -378,21 +406,33 @@ export default function BoardPage() {
                                 extraStyle = { display: 'flex', alignItems: 'center', justifyContent: 'center' };
                                 break;
                             case 'players_home':
+                                const homeOnCourtIds = (match.gamestate?.home_on_court || []) as any[];
+                                const playersOnCourtH = homePlayers.filter(p => homeOnCourtIds.some(id => getStrId(id) === getStrId(p.id)));
+
+                                const homePlayersToShow = homePlayers.length > 0
+                                    ? (playersOnCourtH.length > 0 ? playersOnCourtH : homePlayers.slice(0, 5))
+                                    : [];
+
+                                if (id !== 'preview' && homeOnCourtIds.length > 0 && playersOnCourtH.length === 0 && homePlayers.length > 0) {
+                                    console.warn("RENDER MISMATCH [home]: Showing fallback top 5.", {
+                                        gamestateIds: homeOnCourtIds.map(getStrId),
+                                        availableIds: homePlayers.map(p => getStrId(p.id))
+                                    });
+                                }
+
                                 content = (
                                     <div className="w-full h-full overflow-hidden flex flex-col gap-1">
-                                        {/* Show only players ON COURT if defined, otherwise top 5 */}
-                                        {(match.gamestate?.home_on_court && match.gamestate.home_on_court.length > 0
-                                            ? homePlayers.filter(p => (match.gamestate?.home_on_court as string[]).includes(p.id))
-                                            : homePlayers.slice(0, 5)
-                                        ).map(p => (
-                                            <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-1">
+                                        {homePlayersToShow.length === 0 ? (
+                                            <div className="text-[10px] opacity-20 italic">No players home</div>
+                                        ) : homePlayersToShow.map(p => (
+                                            <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-0.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number}</span>
-                                                    <span className="truncate max-w-[120px]">{p.name.split(' ')[0]}</span>
+                                                    <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number ?? '??'}</span>
+                                                    <span className="truncate max-w-[120px]">{p.name ? p.name.split(' ')[0] : 'N/A'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {(match.gamestate?.player_stats?.[p.id]?.fouls || 0) > 0 && (
-                                                        <span className="text-[0.8em] opacity-70 text-red-400">●{match.gamestate.player_stats[p.id].fouls}</span>
+                                                        <span className="text-[0.8em] opacity-70 text-red-100 bg-red-600 px-1 rounded-sm">{match.gamestate.player_stats[p.id].fouls}</span>
                                                     )}
                                                     <span className="font-mono font-bold text-yellow-500">{match.gamestate?.player_stats?.[p.id]?.points || 0}</span>
                                                 </div>
@@ -402,20 +442,33 @@ export default function BoardPage() {
                                 );
                                 break;
                             case 'players_away':
+                                const awayOnCourtIds = (match.gamestate?.away_on_court || []) as any[];
+                                const playersOnCourtA = awayPlayers.filter(p => awayOnCourtIds.some(id => getStrId(id) === getStrId(p.id)));
+
+                                const awayPlayersList = awayPlayers.length > 0
+                                    ? (playersOnCourtA.length > 0 ? playersOnCourtA : awayPlayers.slice(0, 5))
+                                    : [];
+
+                                if (id !== 'preview' && awayOnCourtIds.length > 0 && playersOnCourtA.length === 0 && awayPlayers.length > 0) {
+                                    console.warn("RENDER MISMATCH [away]: Showing fallback top 5.", {
+                                        gamestateIds: awayOnCourtIds.map(getStrId),
+                                        availableIds: awayPlayers.map(p => getStrId(p.id))
+                                    });
+                                }
+
                                 content = (
                                     <div className="w-full h-full overflow-hidden flex flex-col gap-1">
-                                        {(match.gamestate?.away_on_court && match.gamestate.away_on_court.length > 0
-                                            ? awayPlayers.filter(p => (match.gamestate?.away_on_court as string[]).includes(p.id))
-                                            : awayPlayers.slice(0, 5)
-                                        ).map(p => (
-                                            <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-1">
+                                        {awayPlayersList.length === 0 ? (
+                                            <div className="text-[10px] opacity-20 italic">No players away</div>
+                                        ) : awayPlayersList.map(p => (
+                                            <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-0.5">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number}</span>
-                                                    <span className="truncate max-w-[120px]">{p.name.split(' ')[0]}</span>
+                                                    <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number ?? '??'}</span>
+                                                    <span className="truncate max-w-[120px]">{p.name ? p.name.split(' ')[0] : 'N/A'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {(match.gamestate?.player_stats?.[p.id]?.fouls || 0) > 0 && (
-                                                        <span className="text-[0.8em] opacity-70 text-red-400">●{match.gamestate.player_stats[p.id].fouls}</span>
+                                                        <span className="text-[0.8em] opacity-70 text-red-100 bg-red-600 px-1 rounded-sm">{match.gamestate.player_stats[p.id].fouls}</span>
                                                     )}
                                                     <span className="font-mono font-bold text-yellow-500">{match.gamestate?.player_stats?.[p.id]?.points || 0}</span>
                                                 </div>
@@ -576,10 +629,11 @@ export default function BoardPage() {
                         <div>
                             <h3 className="text-lg font-bold border-b border-white/20 pb-2 mb-4">ROSTER</h3>
                             <div className="space-y-2">
-                                {(match.gamestate?.home_on_court && match.gamestate.home_on_court.length > 0
-                                    ? homePlayers.filter(p => (match.gamestate?.home_on_court as string[]).includes(p.id))
-                                    : homePlayers.slice(0, 5)
-                                ).map(p => (
+                                {(() => {
+                                    const hOnCourt = (match.gamestate?.home_on_court || []) as any[];
+                                    const filtered = homePlayers.filter(p => hOnCourt.some(id => getStrId(id) === getStrId(p.id)));
+                                    return filtered.length > 0 ? filtered : homePlayers.slice(0, 5);
+                                })().map(p => (
                                     <div key={p.id} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded">
                                         <span className="font-mono font-bold w-8 text-center bg-white/10 rounded">{p.number}</span>
                                         <span className="flex-1 px-3">{p.name}</span>
@@ -595,10 +649,11 @@ export default function BoardPage() {
                         <div>
                             <h3 className="text-lg font-bold border-b border-white/20 pb-2 mb-4">ROSTER</h3>
                             <div className="space-y-2">
-                                {(match.gamestate?.away_on_court && match.gamestate.away_on_court.length > 0
-                                    ? awayPlayers.filter(p => (match.gamestate?.away_on_court as string[]).includes(p.id))
-                                    : awayPlayers.slice(0, 5)
-                                ).map(p => (
+                                {(() => {
+                                    const aOnCourt = (match.gamestate?.away_on_court || []) as any[];
+                                    const filtered = awayPlayers.filter(p => aOnCourt.some(id => getStrId(id) === getStrId(p.id)));
+                                    return filtered.length > 0 ? filtered : awayPlayers.slice(0, 5);
+                                })().map(p => (
                                     <div key={p.id} className="flex justify-between items-center text-sm p-2 bg-white/5 rounded">
                                         <span className="font-mono font-bold w-8 text-center bg-white/10 rounded">{p.number}</span>
                                         <span className="flex-1 px-3">{p.name}</span>

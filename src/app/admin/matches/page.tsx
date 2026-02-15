@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { directus } from '@/lib/directus';
 import { readItems } from '@directus/sdk';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2 } from 'lucide-react';
+import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2, Cpu } from 'lucide-react';
 import { Match, Team, Sport } from '@/types/directus';
 
 export default function MatchesList() {
@@ -18,10 +18,10 @@ export default function MatchesList() {
     const fetchMatches = async () => {
         try {
             const data = await directus.request(readItems('matches', {
-                fields: ['*', 'home_team.name', 'away_team.name', 'sport.name', 'sport.type'],
-                sort: ['-date_created']
+                fields: ['*', 'home_team.name' as any, 'away_team.name' as any, 'sport.name' as any, 'sport.type' as any],
+                sort: ['-date_created' as any]
             }));
-            setMatches(data);
+            setMatches(data as any);
         } catch (error) {
             console.error('Error fetching matches:', error);
         } finally {
@@ -121,6 +121,14 @@ export default function MatchesList() {
                                                 title="Open Control"
                                             >
                                                 <Gamepad2 size={18} />
+                                            </Link>
+                                            <Link
+                                                href={`/controlmx/${match.id}`}
+                                                target="_blank"
+                                                className="p-2 hover:bg-gray-800 rounded-lg text-blue-400 transition-colors"
+                                                title="Open MX Control"
+                                            >
+                                                <Cpu size={18} />
                                             </Link>
                                             <div className="w-px h-6 bg-gray-800 mx-1"></div>
                                             <Link
