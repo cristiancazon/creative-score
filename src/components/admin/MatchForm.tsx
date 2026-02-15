@@ -4,9 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { directus } from '@/lib/directus';
 import { createItem, updateItem, readItem, readItems } from '@directus/sdk';
-import { ArrowLeft, Save } from 'lucide-react';
+import { ArrowLeft, Save, Monitor } from 'lucide-react';
 import Link from 'next/link';
-import { Match, Team, Sport } from '@/types/directus';
+import { Match, Team, Sport, Board } from '@/types/directus';
 
 interface MatchFormProps {
     id?: string;
@@ -18,6 +18,7 @@ export default function MatchForm({ id }: MatchFormProps) {
 
     const [sports, setSports] = useState<Sport[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
+    const [boards, setBoards] = useState<Board[]>([]);
     // Filtered teams based on selected sport
     const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
 
@@ -35,12 +36,30 @@ export default function MatchForm({ id }: MatchFormProps) {
     useEffect(() => {
         const loadData = async () => {
             try {
-                const [sportsData, teamsData] = await Promise.all([
+                // Check schema for matches collection (debug)
+                try {
+                    // @ts-ignore
+                    const fields = await directus.request(readItems('directus_fields', {
+                        filter: { collection: { _eq: 'matches' } }
+                    }));
+                    console.log("[DEBUG] Matches Fields:", fields.map((f: any) => f.field));
+                } catch (e) {
+                    console.warn("[DEBUG] Could not fetch schema fields", e);
+                }
+
+                const [sportsData, teamsData, boardsData] = await Promise.all([
                     directus.request(readItems('sports')),
-                    directus.request(readItems('teams'))
+                    directus.request(readItems('teams')),
+                    directus.request(readItems('boards'))
                 ]);
                 setSports(sportsData);
                 setTeams(teamsData);
+                // @ts-ignore
+                setBoards(boardsData);
+
+                if (boardsData && boardsData.length > 0) {
+                    console.log("[DEBUG] Boards Sample ID:", typeof boardsData[0].id, boardsData[0].id);
+                }
 
                 if (id && id !== 'new') {
                     await fetchMatch(id);
@@ -75,6 +94,7 @@ export default function MatchForm({ id }: MatchFormProps) {
         const sportId = typeof data.sport === 'object' && data.sport ? (data.sport as Sport).id : data.sport;
         const homeId = typeof data.home_team === 'object' && data.home_team ? (data.home_team as Team).id : data.home_team;
         const awayId = typeof data.away_team === 'object' && data.away_team ? (data.away_team as Team).id : data.away_team;
+        const boardId = typeof data.board === 'object' && data.board ? (data.board as Board).id : data.board;
 
         // Format date for input
         let dateStr = data.start_time;
@@ -85,6 +105,7 @@ export default function MatchForm({ id }: MatchFormProps) {
             sport: sportId as string,
             home_team: homeId as string,
             away_team: awayId as string,
+            board: boardId as string,
             start_time: dateStr
         });
     };
@@ -94,6 +115,7 @@ export default function MatchForm({ id }: MatchFormProps) {
         setLoading(true);
 
         try {
+            console.log('Saving match data:', formData);
             if (id && id !== 'new') {
                 await directus.request(updateItem('matches', id, formData));
             } else {
@@ -118,6 +140,16 @@ export default function MatchForm({ id }: MatchFormProps) {
                 <h1 className="text-3xl font-bold text-white">
                     {id && id !== 'new' ? 'Edit Match' : 'New Match'}
                 </h1>
+                {id && id !== 'new' && (
+                    <Link
+                        href={`/board/${id}`}
+                        target="_blank"
+                        className="ml-auto flex items-center gap-2 bg-green-600/20 text-green-400 px-4 py-2 rounded-lg hover:bg-green-600/30 transition-colors border border-green-900/50"
+                    >
+                        <Monitor size={18} />
+                        Open Scoreboard
+                    </Link>
+                )}
             </div>
 
             <div className="bg-gray-900 border border-gray-800 rounded-xl p-8 max-w-3xl">
@@ -180,6 +212,7 @@ export default function MatchForm({ id }: MatchFormProps) {
 
                     {/* Details */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* Start Time */}
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-2">Start Time</label>
                             <input
@@ -189,6 +222,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                                 className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
                         </div>
+                        {/* Status */}
                         <div>
                             <label className="block text-sm font-medium text-gray-400 mb-2">Initial Status</label>
                             <select
@@ -202,6 +236,22 @@ export default function MatchForm({ id }: MatchFormProps) {
                                 <option value="finished">Finished</option>
                             </select>
                         </div>
+                    </div>
+
+                    {/* Board Selection */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Display Theme (Board)</label>
+                        <select
+                            value={formData.board as string || ''}
+                            onChange={(e) => setFormData({ ...formData, board: e.target.value || null })}
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">-- Default Theme --</option>
+                            {boards.map(b => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                        <p className="text-xs text-gray-500 mt-1">Select the visual appearance for this match's scoreboard.</p>
                     </div>
 
                     {/* Initial Scores (Hidden for new mostly, but useful for edits) */}

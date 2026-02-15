@@ -11,13 +11,28 @@ const AUTH_STORAGE_KEY = 'creative_score_cms_token';
 
 const storage = typeof window !== 'undefined' ? {
   get: () => {
-    const val = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    return val ? JSON.parse(val) : null;
+    try {
+      const val = window.localStorage.getItem(AUTH_STORAGE_KEY);
+      console.log(`[Directus Storage] GET ->`, val ? 'FOUND' : 'NULL');
+      // If it's literally the string "undefined", return null
+      if (val === 'undefined' || val === null) return null;
+      return JSON.parse(val);
+    } catch (e) {
+      console.error("[Directus Storage] Parse error:", e);
+      return null;
+    }
   },
   set: (data: any) => {
+    // In 'json' mode, the SDK passes the entire session object as the first argument
+    console.log(`[Directus Storage] SET ->`, typeof data);
+    if (data === undefined) {
+      console.warn("[Directus Storage] Attempted to set undefined data based on single arg check");
+      return;
+    }
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
   },
   delete: () => {
+    console.log(`[Directus Storage] DELETE`);
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
   }
 } : undefined;

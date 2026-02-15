@@ -39,9 +39,10 @@ export interface Match {
     home_score: number;
     away_score: number;
     current_period: number;
-    timer_seconds: number; // Remaining seconds when paused/saved
-    timer_started_at: string | null; // ISO Timestamp when clock started running
-    gamestate: Record<string, any>; // JSON
+    timer_seconds: number;
+    timer_started_at: string | null;
+    gamestate: Record<string, any>;
+    board?: string | Board; // The selected board theme
 }
 
 export interface Schema {
@@ -49,4 +50,24 @@ export interface Schema {
     teams: Team[];
     players: Player[];
     matches: Match[];
+    boards: Board[];
+}
+
+export interface Board {
+    id: string;
+    name: string;
+    // active_match removed as it is now on the Match side
+    background_color?: string;
+    text_color?: string;
+    show_timer: boolean;
+    show_period: boolean;
+    show_fouls: boolean;
+    show_timeouts: boolean;
+    show_players: boolean;
+    show_player_stats: boolean;
+    primary_color_home?: string;
+    primary_color_away?: string;
+    label_period?: string;
+    label_fouls?: string;
+    layout?: any; // JSON configuration for Board Designer
 }

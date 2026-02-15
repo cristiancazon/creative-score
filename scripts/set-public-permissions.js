@@ -4,7 +4,7 @@ const TOKEN = 'WNm1tezUYancfqeM0niVJY23BgmjTXlm'; // Admin Token
 async function setPublicPermissions() {
     console.log('Setting Public Permissions...');
 
-    const collections = ['matches', 'teams', 'sports', 'players', 'directus_files'];
+    const collections = ['matches', 'teams', 'sports', 'players', 'directus_files', 'boards'];
 
     for (const collection of collections) {
         // Check if permission already exists for public (role = null)

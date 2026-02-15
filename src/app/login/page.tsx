@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import Image from 'next/image';
 import { directus } from '@/lib/directus';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -23,10 +25,10 @@ export default function LoginPage() {
             const loginResult = await directus.login({ email, password });
             console.log("Login Result:", loginResult);
 
-            // Manual setToken for safety, as storage adapter handles keys
-            if (loginResult && loginResult.access_token) {
-                // @ts-ignore
-                await directus.setToken(loginResult.access_token);
+            // Manual setToken is not needed as login handles storage
+            // But we keep the check to ensure success
+            if (!loginResult || !loginResult.access_token) {
+                throw new Error("Login failed - no token received");
             }
 
             // Check token immediately after
@@ -49,8 +51,18 @@ export default function LoginPage() {
                 animate={{ opacity: 1, y: 0 }}
                 className="bg-gray-900 border border-gray-800 p-8 rounded-2xl w-full max-w-md shadow-2xl"
             >
-                <h1 className="text-3xl font-bold text-white mb-2 text-center">Creative Score</h1>
-                <p className="text-gray-400 text-center mb-8">Sign in to manage scoreboard</p>
+                <div className="flex justify-center mb-6">
+                    <div className="relative w-full h-24">
+                        <Image
+                            src="/logo_cs.png"
+                            alt="Creative Score"
+                            fill
+                            className="object-contain"
+                            priority
+                        />
+                    </div>
+                </div>
+
 
                 {error && (
                     <div className="bg-red-900/30 border border-red-500 text-red-200 p-3 rounded-lg mb-6 text-sm">
