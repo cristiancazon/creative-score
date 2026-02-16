@@ -57,7 +57,7 @@ services:
       LETSENCRYPT_HOST: score.xerex.tech
       LETSENCRYPT_EMAIL: admin@xerex.tech
     networks:
-      - nginx-proxy
+      - docker-directorios_proxy-net
       - default
 
   creative-score:
@@ -78,11 +78,11 @@ services:
     expose:
       - 3000
     networks:
-      - nginx-proxy
+      - docker-directorios_proxy-net
       - default
 
 networks:
-  nginx-proxy:
+  docker-directorios_proxy-net:
     external: true
   default:
     driver: bridge
