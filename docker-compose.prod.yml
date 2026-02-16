@@ -1,26 +1,80 @@
-
-
 services:
+  database:
+    container_name: creative-score-db
+    image: postgres:15-alpine
+    restart: always
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: 'directus'
+      POSTGRES_PASSWORD: 'directus_password_change_me'
+      POSTGRES_DB: 'directus'
+    networks:
+      - default
+
+  cache:
+    container_name: creative-score-redis
+    image: redis:alpine
+    restart: always
+    networks:
+      - default
+
+  directus:
+    container_name: creative-score-directus
+    image: directus/directus:latest
+    restart: always
+    ports:
+      - 8055:8055
+    volumes:
+      - ./uploads:/directus/uploads
+      - ./extensions:/directus/extensions
+    depends_on:
+      - database
+      - cache
+    environment:
+      KEY: 'creative-score-key-replace-me'
+      SECRET: 'creative-score-secret-replace-me'
+      
+      DB_CLIENT: 'pg'
+      DB_HOST: 'database'
+      DB_PORT: '5432'
+      DB_DATABASE: 'directus'
+      DB_USER: 'directus'
+      DB_PASSWORD: 'directus_password_change_me'
+
+      CACHE_ENABLED: 'true'
+      CACHE_STORE: 'redis'
+      CACHE_REDIS: 'redis://cache:6379'
+
+      ADMIN_EMAIL: 'admin@xerex.tech'
+      ADMIN_PASSWORD: 'admin'
+
+      PUBLIC_URL: 'https://score.xerex.tech'
+      
+      # Reverse Proxy
+      VIRTUAL_HOST: score.xerex.tech
+      VIRTUAL_PORT: 8055
+      LETSENCRYPT_HOST: score.xerex.tech
+      LETSENCRYPT_EMAIL: admin@xerex.tech
+    networks:
+      - nginx-proxy
+      - default
+
   creative-score:
     container_name: creative-score-app
     build:
       context: .
       dockerfile: Dockerfile
     restart: always
+    depends_on:
+      - directus
     environment:
       - NODE_ENV=production
-      # VIRTUAL_HOST and LETSENCRYPT_HOST for nginx-proxy
       - VIRTUAL_HOST=create.xerex.tech
       - LETSENCRYPT_HOST=create.xerex.tech
       - LETSENCRYPT_EMAIL=admin@xerex.tech
-      # Directus URL - Adjust if needed. 
-      # Since we are in the same network, we can use the container name `directus_app` and internal port 8055
-      # BUT, since this is a Client Component heavy app, the browser needs to access Directus too.
-      # So we should use the PUBLIC URL for Directus.
-      # Assuming directus is at directus.xerex.tech or similar.
-      # If using internal network for server-side calls, we might need separate internal/external vars, 
-      # but standard Directus SDK usage in Next.js usually relies on one public URL for simplicity unless using SSR with private networking.
-      - NEXT_PUBLIC_DIRECTUS_URL=https://directus.xerex.tech
+      # Point to the public URL of the new Directus instance
+      - NEXT_PUBLIC_DIRECTUS_URL=https://score.xerex.tech
     expose:
       - 3000
     networks:
@@ -30,3 +84,8 @@ services:
 networks:
   nginx-proxy:
     external: true
+  default:
+    driver: bridge
+
+volumes:
+  postgres_data:
