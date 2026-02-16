@@ -19,7 +19,7 @@ export default function ControlPage() {
                 const matches = await directus.request(readItems('matches', {
                     filter: { status: { _in: ['live', 'scheduled', 'paused'] } },
                     limit: 1,
-                    fields: ['*', 'home_team.*', 'away_team.*']
+                    fields: ['*', 'home_team.*', 'away_team.*'] as any
                 }));
 
                 if (matches && matches.length > 0) {

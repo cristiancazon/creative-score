@@ -9,7 +9,7 @@ export interface BasketballState extends GameState {
 }
 
 export class Basketball extends AbstractSport {
-    protected state: BasketballState;
+    declare protected state: BasketballState;
 
     constructor(initialState?: Partial<BasketballState>) {
         super({
@@ -21,7 +21,7 @@ export class Basketball extends AbstractSport {
             isRunning: false,
             status: 'scheduled',
             ...initialState,
-        });
+        } as any);
 
         this.state = this.state as BasketballState;
         if (!this.state.fouls) this.state.fouls = { home: 0, away: 0 };

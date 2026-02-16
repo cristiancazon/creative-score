@@ -18,10 +18,10 @@ export default function PlayersList() {
     const fetchPlayers = async () => {
         try {
             const data = await directus.request(readItems('players', {
-                fields: ['*', 'team.name', 'team.logo'],
-                sort: ['team.name', 'name']
+                fields: ['*', 'team.name', 'team.logo'] as any,
+                sort: ['team.name', 'name'] as any
             }));
-            setPlayers(data);
+            setPlayers(data as any);
         } catch (error) {
             console.error('Error fetching players:', error);
         } finally {

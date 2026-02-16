@@ -18,9 +18,9 @@ export default function TeamsList() {
     const fetchTeams = async () => {
         try {
             const data = await directus.request(readItems('teams', {
-                fields: ['*', 'sport.*']
+                fields: ['*', 'sport.*'] as any
             }));
-            setTeams(data);
+            setTeams(data as any);
         } catch (error) {
             console.error('Error fetching teams:', error);
         } finally {

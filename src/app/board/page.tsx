@@ -20,10 +20,10 @@ export default function BoardPage() {
                 const matches = await directus.request(readItems('matches', {
                     filter: { status: { _in: ['live', 'scheduled', 'paused'] } },
                     limit: 1,
-                    fields: ['*', 'home_team.*', 'away_team.*', 'sport.*']
+                    fields: ['*', 'home_team.*', 'away_team.*', 'sport.*'] as any
                 }));
 
-                if (matches && matches.length > 0) {
+                if (matches && (matches as any).length > 0) {
                     const m = matches[0] as Match;
                     setMatch(m);
                 } else {
@@ -44,7 +44,7 @@ export default function BoardPage() {
 
         const connectRealtime = async () => {
             const { subscription } = await directus.subscribe('matches', {
-                query: { filter: { id: { _eq: match.id } }, fields: ['*', 'home_team.*', 'away_team.*', 'sport.*'] },
+                query: { filter: { id: { _eq: match.id } }, fields: ['*', 'home_team.*', 'away_team.*', 'sport.*'] as any },
             });
 
             for await (const update of subscription) {

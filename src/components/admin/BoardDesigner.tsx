@@ -317,7 +317,7 @@ export default function BoardDesigner({ boardId }: BoardDesignerProps) {
                                 });
                             }}
                             bounds="parent"
-                            onClick={(e) => {
+                            onClick={(e: any) => {
                                 e.stopPropagation();
                                 setSelectedId(el.id);
                             }}
@@ -582,3 +582,4 @@ export default function BoardDesigner({ boardId }: BoardDesignerProps) {
         </div>
     );
 }
+

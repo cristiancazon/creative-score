@@ -18,7 +18,7 @@ export default function MatchesList() {
     const fetchMatches = async () => {
         try {
             const data = await directus.request(readItems('matches', {
-                fields: ['*', 'home_team.name' as any, 'away_team.name' as any, 'sport.name' as any, 'sport.type' as any],
+                fields: ['*', 'home_team.name', 'away_team.name', 'sport.name', 'sport.type'] as any,
                 sort: ['-date_created' as any]
             }));
             setMatches(data as any);

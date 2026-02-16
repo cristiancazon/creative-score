@@ -130,7 +130,7 @@ export default function TeamForm({ id }: TeamFormProps) {
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             placeholder="e.g. Los Angeles Lakers"
                             required
                         />
@@ -143,7 +143,7 @@ export default function TeamForm({ id }: TeamFormProps) {
                                 type="text"
                                 value={formData.short_name || ''}
                                 onChange={(e) => setFormData({ ...formData, short_name: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 placeholder="e.g. LAL"
                                 maxLength={3}
                             />
@@ -177,7 +177,7 @@ export default function TeamForm({ id }: TeamFormProps) {
                         <select
                             value={formData.sport as string}
                             onChange={(e) => setFormData({ ...formData, sport: e.target.value })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             required
                         >
                             <option value="" disabled>Select Sport</option>
@@ -201,7 +201,7 @@ export default function TeamForm({ id }: TeamFormProps) {
                                     type="text"
                                     value={formData.primary_color}
                                     onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500 uppercase"
                                 />
                             </div>
                         </div>
@@ -218,7 +218,7 @@ export default function TeamForm({ id }: TeamFormProps) {
                                     type="text"
                                     value={formData.secondary_color}
                                     onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 uppercase"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500 uppercase"
                                 />
                             </div>
                         </div>
@@ -239,3 +239,4 @@ export default function TeamForm({ id }: TeamFormProps) {
         </div>
     );
 }
+

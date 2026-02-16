@@ -170,7 +170,7 @@ export default function PlayerForm({ id }: PlayerFormProps) {
                             type="text"
                             value={formData.name || ''}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             placeholder="e.g. LeBron James"
                             required
                         />
@@ -182,7 +182,7 @@ export default function PlayerForm({ id }: PlayerFormProps) {
                             <select
                                 value={formData.team as string}
                                 onChange={(e) => setFormData({ ...formData, team: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 required
                             >
                                 <option value="" disabled>Select Team</option>
@@ -197,7 +197,7 @@ export default function PlayerForm({ id }: PlayerFormProps) {
                                 type="number"
                                 value={formData.number || ''}
                                 onChange={(e) => setFormData({ ...formData, number: parseInt(e.target.value) || 0 })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 placeholder="e.g. 23"
                                 required
                             />
@@ -211,7 +211,7 @@ export default function PlayerForm({ id }: PlayerFormProps) {
                                 type="text"
                                 value={formData.position || ''}
                                 onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 placeholder="e.g. Forward"
                             />
                         </div>
@@ -224,7 +224,7 @@ export default function PlayerForm({ id }: PlayerFormProps) {
                                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                         className="sr-only peer"
                                     />
-                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                                    <div className="w-11 h-6 bg-gray-700 peer-focus:outline-none peer- peer-focus:ring-blue-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                                 </div>
                                 <span className="text-sm font-medium text-gray-400">Active Player</span>
                             </label>
@@ -246,3 +246,4 @@ export default function PlayerForm({ id }: PlayerFormProps) {
         </div>
     );
 }
+

@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  creative-score:
+    container_name: creative-score-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
+    environment:
+      - NODE_ENV=production
+      # VIRTUAL_HOST and LETSENCRYPT_HOST for nginx-proxy
+      - VIRTUAL_HOST=create.xerex.tech
+      - LETSENCRYPT_HOST=create.xerex.tech
+      - LETSENCRYPT_EMAIL=admin@xerex.tech
+      # Directus URL - Adjust if needed. 
+      # Since we are in the same network, we can use the container name `directus_app` and internal port 8055
+      # BUT, since this is a Client Component heavy app, the browser needs to access Directus too.
+      # So we should use the PUBLIC URL for Directus.
+      # Assuming directus is at directus.xerex.tech or similar.
+      # If using internal network for server-side calls, we might need separate internal/external vars, 
+      # but standard Directus SDK usage in Next.js usually relies on one public URL for simplicity unless using SSR with private networking.
+      - NEXT_PUBLIC_DIRECTUS_URL=https://directus.xerex.tech
+    expose:
+      - 3000
+    networks:
+      - nginx-proxy
+      - default
+
+networks:
+  nginx-proxy:
+    external: true

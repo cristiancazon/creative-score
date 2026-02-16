@@ -161,7 +161,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                         <select
                             value={formData.sport as string}
                             onChange={(e) => setFormData({ ...formData, sport: e.target.value, home_team: '', away_team: '' })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-blue-500"
                             required
                         >
                             <option value="" disabled>Select Sport</option>
@@ -178,7 +178,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                             <select
                                 value={formData.home_team as string}
                                 onChange={(e) => setFormData({ ...formData, home_team: e.target.value })}
-                                className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 required
                             >
                                 <option value="" disabled>Select Home</option>
@@ -197,7 +197,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                             <select
                                 value={formData.away_team as string}
                                 onChange={(e) => setFormData({ ...formData, away_team: e.target.value })}
-                                className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 required
                             >
                                 <option value="" disabled>Select Away</option>
@@ -219,7 +219,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                                 type="datetime-local"
                                 value={formData.start_time}
                                 onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             />
                         </div>
                         {/* Status */}
@@ -227,8 +227,8 @@ export default function MatchForm({ id }: MatchFormProps) {
                             <label className="block text-sm font-medium text-gray-400 mb-2">Initial Status</label>
                             <select
                                 value={formData.status}
-                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             >
                                 <option value="scheduled">Scheduled</option>
                                 <option value="live">Live</option>
@@ -243,8 +243,8 @@ export default function MatchForm({ id }: MatchFormProps) {
                         <label className="block text-sm font-medium text-gray-400 mb-2">Display Theme (Board)</label>
                         <select
                             value={formData.board as string || ''}
-                            onChange={(e) => setFormData({ ...formData, board: e.target.value || null })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onChange={(e) => setFormData({ ...formData, board: e.target.value || undefined })}
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                         >
                             <option value="">-- Default Theme --</option>
                             {boards.map(b => (
@@ -263,7 +263,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                                     type="number"
                                     value={formData.home_score}
                                     onChange={(e) => setFormData({ ...formData, home_score: parseInt(e.target.value) })}
-                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 />
                             </div>
                             <div>
@@ -272,7 +272,7 @@ export default function MatchForm({ id }: MatchFormProps) {
                                     type="number"
                                     value={formData.away_score}
                                     onChange={(e) => setFormData({ ...formData, away_score: parseInt(e.target.value) })}
-                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 />
                             </div>
                         </div>
@@ -293,3 +293,4 @@ export default function MatchForm({ id }: MatchFormProps) {
         </div>
     );
 }
+

@@ -112,7 +112,7 @@ export default function SportForm({ id }: SportFormProps) {
                             type="text"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             placeholder="e.g. Basketball, Soccer"
                             required
                         />
@@ -149,7 +149,7 @@ export default function SportForm({ id }: SportFormProps) {
                             <select
                                 value={formData.type}
                                 onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                             >
                                 <option value="basketball">Basketball (Quarters)</option>
                                 <option value="soccer">Soccer (Halves)</option>
@@ -165,7 +165,7 @@ export default function SportForm({ id }: SportFormProps) {
                                 type="number"
                                 value={formData.periods || 4}
                                 onChange={(e) => setFormData({ ...formData, periods: parseInt(e.target.value) })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 min={1}
                             />
                         </div>
@@ -175,7 +175,7 @@ export default function SportForm({ id }: SportFormProps) {
                                 type="number"
                                 value={formData.period_duration || 10}
                                 onChange={(e) => setFormData({ ...formData, period_duration: parseInt(e.target.value) })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 min={1}
                             />
                         </div>
@@ -196,3 +196,4 @@ export default function SportForm({ id }: SportFormProps) {
         </div>
     );
 }
+

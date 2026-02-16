@@ -61,7 +61,7 @@ export default function ControlMXPage() {
         const fetchData = async () => {
             try {
                 const matchData = (await directus.request(readItem('matches', id, {
-                    fields: ['*', 'home_team.*' as any, 'away_team.*' as any]
+                    fields: ['*', 'home_team.*', 'away_team.*'] as any
                 }))) as any as Match;
                 setMatch(matchData);
 

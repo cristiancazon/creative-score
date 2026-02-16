@@ -1,5 +1,5 @@
 import { directus } from '../src/lib/directus';
-import { authentication } from '@directus/sdk';
+import { authentication, createItem } from '@directus/sdk';
 
 // This script is meant to be run manually to seed data
 // Usage: tsX scripts/seed.ts (requires tsx or similar runner)
@@ -8,11 +8,11 @@ import { authentication } from '@directus/sdk';
 
 const seed = async () => {
     // Login first
-    await directus.login('admin@example.com', 'admin');
+    await directus.login({ email: 'admin@example.com', password: 'admin' });
 
     console.log('Seeding Sports...');
     const basketball = await directus.request(
-        directus.items('sports' as any).createOne({
+        createItem('sports' as any, {
             name: 'Basketball',
             slug: 'basketball',
             rules_config: {
@@ -25,7 +25,7 @@ const seed = async () => {
 
     console.log('Seeding Teams...');
     const homeTeam = await directus.request(
-        directus.items('teams' as any).createOne({
+        createItem('teams' as any, {
             name: 'Los Angeles Lakers',
             short_name: 'LAL',
             primary_color: '#552583',
@@ -34,7 +34,7 @@ const seed = async () => {
     );
 
     const awayTeam = await directus.request(
-        directus.items('teams' as any).createOne({
+        createItem('teams' as any, {
             name: 'Boston Celtics',
             short_name: 'BOS',
             primary_color: '#007A33',
@@ -44,7 +44,7 @@ const seed = async () => {
 
     console.log('Seeding Match...');
     const match = await directus.request(
-        directus.items('matches' as any).createOne({
+        createItem('matches' as any, {
             start_time: new Date().toISOString(),
             sport: (basketball as any).id,
             home_team: (homeTeam as any).id,

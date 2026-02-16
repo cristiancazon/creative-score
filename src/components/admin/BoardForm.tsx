@@ -88,7 +88,7 @@ export default function BoardForm({ id }: BoardFormProps) {
                                 type="text"
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full bg-gray-950 border border-gray-800 rounded-lg p-3 text-white focus:outline-none  focus:ring-blue-500"
                                 placeholder="e.g. Blue Minimalist, Red Digital..."
                                 required
                             />
@@ -204,3 +204,4 @@ function Toggle({ label, checked, onChange }: { label: string, checked?: boolean
         </label>
     );
 }
+

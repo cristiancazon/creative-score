@@ -57,8 +57,8 @@ export default function ControlPage() {
             try {
                 // 1. Fetch Match
                 const matchData = await directus.request(readItem('matches', id, {
-                    fields: ['*', 'home_team.*', 'away_team.*']
-                })) as Match;
+                    fields: ['*', 'home_team.*', 'away_team.*'] as any
+                })) as unknown as Match;
                 setMatch(matchData);
 
                 // 2. Fetch Players

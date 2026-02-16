@@ -14,7 +14,7 @@ export default function BoardsPage() {
     const fetchBoards = async () => {
         try {
             const data = await directus.request(readItems('boards', {
-                fields: ['*', 'active_match.home_team.name', 'active_match.away_team.name']
+                fields: ['*', 'active_match.home_team.name', 'active_match.away_team.name'] as any
             }));
             // @ts-ignore
             setBoards(data);
@@ -80,11 +80,11 @@ export default function BoardsPage() {
                             <div className="mb-6">
                                 <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Currently Showing</span>
                                 <div className="text-gray-300 mt-1 flex items-center gap-2">
-                                    {board.active_match ? (
+                                    {(board as any).active_match ? (
                                         <>
                                             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
                                             {/* @ts-ignore */}
-                                            {board.active_match.home_team?.name} vs {board.active_match.away_team?.name}
+                                            {(board.active_match as any).home_team?.name} vs {(board.active_match as any).away_team?.name}
                                         </>
                                     ) : (
                                         <span className="text-gray-600 italic">No active match</span>
