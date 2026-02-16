@@ -310,15 +310,19 @@ export default function ControlMXPage() {
         const handleKeyDown = (e: KeyboardEvent) => {
             const key = e.key;
 
-            // Team Switch
-            if (key === 'ArrowLeft' || key === 'a' || key === '<' || key === ',') setSelectedTeam('home');
-            if (key === 'ArrowRight' || key === 'd' || key === '>' || key === '.') setSelectedTeam('away');
+            // Team Switch (New Mapping: N = Local, M = Visitor)
+            if (key === 'n' || key === 'N' || key === 'ArrowLeft') setSelectedTeam('home');
+            if (key === 'm' || key === 'M' || key === 'ArrowRight') setSelectedTeam('away');
 
-            // Grid Layout Mapping (1-9 supported as digits or numpad)
-            const isDigit = /^[1-9]$/.test(key);
-            if (isDigit) {
-                const index = parseInt(key) - 1;
-                handleGridAction(index);
+            // Grid Layout Mapping (q,w,e,a,s,d,z,x,c)
+            const gridMap: { [key: string]: number } = {
+                'q': 0, 'w': 1, 'e': 2,
+                'a': 3, 's': 4, 'd': 5,
+                'z': 6, 'x': 7, 'c': 8
+            };
+
+            if (key.toLowerCase() in gridMap) {
+                handleGridAction(gridMap[key.toLowerCase()]);
             }
 
             // ESC to back
@@ -428,7 +432,7 @@ export default function ControlMXPage() {
                                 ) : (
                                     <span className="text-white/10 text-[10px] font-black italic">VACÍO</span>
                                 )}
-                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{idx + 1}</span>
+                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['Q', 'W', 'E'][idx]}</span>
                             </button>
                         ))}
 
@@ -450,11 +454,11 @@ export default function ControlMXPage() {
                                 ) : (
                                     <span className="text-white/10 text-[10px] font-black italic">VACÍO</span>
                                 )}
-                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{idx + 1}</span>
+                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['A', 'S'][idx - 3]}</span>
                             </button>
                         ))}
                         <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] flex items-center justify-center relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">6</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">D</span>
                             <div className="w-8 h-[2px] bg-white/10"></div>
                         </div>
 
@@ -466,13 +470,13 @@ export default function ControlMXPage() {
                         >
                             {isRunning ? <Pause size={48} fill="currentColor" /> : <Play size={48} fill="currentColor" className="ml-2" />}
                             <span className="absolute bottom-4 text-[10px] uppercase font-black tracking-[0.2em]">{isRunning ? 'Pause' : 'Play'}</span>
-                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">7</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">Z</span>
                         </button>
                         <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">8</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">X</span>
                         </div>
                         <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">9</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">C</span>
                         </div>
                     </>
                 )}
@@ -483,7 +487,7 @@ export default function ControlMXPage() {
                         {[1, 2, 3].map((v, i) => (
                             <button key={i} onClick={() => handlePlayerAction('pts', v)} className="bg-blue-500/10 border-2 border-blue-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-blue-500/60 relative">
                                 <span className="text-6xl font-black text-blue-400 group-hover:scale-110 transition-transform">+{v}</span>
-                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{i + 1}</span>
+                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['Q', 'W', 'E'][i]}</span>
                             </button>
                         ))}
 
@@ -491,23 +495,23 @@ export default function ControlMXPage() {
                         {[1, 2, 3].map((v, i) => (
                             <button key={i} onClick={() => handlePlayerAction('pts', -v)} className="bg-red-500/10 border-2 border-red-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-red-500/60 relative">
                                 <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">-{v}</span>
-                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{i + 4}</span>
+                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['A', 'S', 'D'][i]}</span>
                             </button>
                         ))}
 
                         {/* +F, -F, C */}
                         <button onClick={() => handlePlayerAction('foul', 1)} className="bg-orange-500/10 border-2 border-orange-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-500/60 relative">
                             <span className="text-5xl font-black text-orange-400 tracking-tighter group-hover:scale-110">+F</span>
-                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">7</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">Z</span>
                         </button>
                         <button onClick={() => handlePlayerAction('foul', -1)} className="bg-orange-900/10 border-2 border-orange-900/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-900/60 relative">
                             <span className="text-5xl font-black text-orange-900 tracking-tighter group-hover:scale-110">-F</span>
-                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">8</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">X</span>
                         </button>
                         <button onClick={() => setView('substitution')} className="bg-white/10 border-2 border-white/20 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-white/40 relative">
                             <span className="text-6xl font-black text-white group-hover:rotate-12 transition-all">C</span>
                             <span className="absolute bottom-5 text-[10px] font-black uppercase tracking-widest opacity-40">Sub</span>
-                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">9</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">C</span>
                         </button>
                     </>
                 )}
@@ -531,7 +535,9 @@ export default function ControlMXPage() {
                                 ) : (
                                     <div className="w-1 h-1 rounded-full bg-white/10"></div>
                                 )}
-                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{idx + 1}</span>
+                                <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">
+                                    {['Q', 'W', 'E', 'A', 'S', 'D', 'Z', 'X', 'C'][idx]}
+                                </span>
                             </button>
                         ))}
                     </>
@@ -542,12 +548,13 @@ export default function ControlMXPage() {
             <div className="flex justify-between items-center gap-6 mt-auto">
                 <button
                     onClick={() => setSelectedTeam('home')}
-                    className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-500 font-black text-2xl tracking-tighter ${selectedTeam === 'home'
+                    className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-500 font-black text-2xl tracking-tighter relative ${selectedTeam === 'home'
                         ? 'bg-purple-600 border-purple-400 text-white shadow-[0_0_30px_rgba(168,85,247,0.4)] scale-105'
                         : 'bg-white/5 border-transparent text-white/20 hover:bg-white/10'
                         }`}
                 >
                     <ChevronLeft size={40} strokeWidth={4} /> LOCAL
+                    <span className="absolute top-4 left-5 text-[10px] opacity-40 font-black">N</span>
                 </button>
 
                 {view !== 'main' && (
@@ -561,12 +568,13 @@ export default function ControlMXPage() {
 
                 <button
                     onClick={() => setSelectedTeam('away')}
-                    className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-500 font-black text-2xl tracking-tighter ${selectedTeam === 'away'
+                    className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-500 font-black text-2xl tracking-tighter relative ${selectedTeam === 'away'
                         ? 'bg-green-600 border-green-400 text-white shadow-[0_0_30px_rgba(34,197,94,0.4)] scale-105'
                         : 'bg-white/5 border-transparent text-white/20 hover:bg-white/10'
                         }`}
                 >
                     VISITANTE <ChevronRight size={40} strokeWidth={4} />
+                    <span className="absolute top-4 right-5 text-[10px] opacity-40 font-black">M</span>
                 </button>
             </div>
 
@@ -575,17 +583,17 @@ export default function ControlMXPage() {
                 <div className="glass px-6 py-2 rounded-2xl border border-white/5">
                     {view === 'main' ? (
                         <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
-                            <span className="text-white/60">1-5: Seleccionar</span>
+                            <span className="text-white/60">Q-S: Seleccionar</span>
                             <span>•</span>
-                            <span className="text-white/60">7: Reloj</span>
+                            <span className="text-white/60">Z: Reloj</span>
                             <span>•</span>
-                            <span className="text-white/60">&lt; &gt;: Equipos</span>
+                            <span className="text-white/60">N / M: Equipos</span>
                         </div>
                     ) : (
                         <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
                             <span className="text-white/60">Active: #{activePlayer?.number} {activePlayer?.name}</span>
                             <span>•</span>
-                            <span className="text-blue-400">ESC: Volver</span>
+                            <span className="text-blue-400">ESC / Q: Volver</span>
                         </div>
                     )}
                 </div>
