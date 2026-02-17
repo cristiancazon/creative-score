@@ -42,7 +42,7 @@ services:
       DB_USER: 'directus'
       DB_PASSWORD: 'directus_password_change_me'
 
-      CACHE_ENABLED: 'true'
+      CACHE_ENABLED: 'false'
       CACHE_STORE: 'redis'
       REDIS_HOST: 'cache'
       REDIS_PORT: 6379
