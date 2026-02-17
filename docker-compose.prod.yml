@@ -66,6 +66,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_DIRECTUS_URL: https://score.xerex.tech
     restart: always
     depends_on:
       - directus
