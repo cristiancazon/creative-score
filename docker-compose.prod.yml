@@ -52,6 +52,11 @@ services:
 
       PUBLIC_URL: 'https://score.xerex.tech'
       
+      # CORS to allow app to connect
+      CORS_ENABLED: 'true'
+      CORS_ORIGIN: 'https://create.xerex.tech'
+      CORS_METHODS: 'GET,POST,PATCH,DELETE'
+      
       # Reverse Proxy
       VIRTUAL_HOST: score.xerex.tech
       VIRTUAL_PORT: 8055
