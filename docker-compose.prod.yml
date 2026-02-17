@@ -46,6 +46,9 @@ services:
       CACHE_STORE: 'redis'
       REDIS_HOST: 'cache'
       REDIS_PORT: 6379
+      
+      # Messenger for Realtime Sync
+      MESSENGER_STORE: 'redis'
 
       ADMIN_EMAIL: 'admin@xerex.tech'
       ADMIN_PASSWORD: 'admin'
