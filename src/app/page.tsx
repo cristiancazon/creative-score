@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
-import { motion, useInView, AnimatePresence } from 'framer-motion';
+import { motion, useInView, AnimatePresence, Variants } from 'framer-motion';
 
 // ─── i18n ─────────────────────────────────────────────────────────────────────
 const content = {
@@ -225,20 +225,21 @@ const content = {
 type Lang = keyof typeof content;
 
 // ─── Animation Variants ────────────────────────────────────────────────────────
-const fadeUp = {
+const fadeUp: Variants = {
   hidden: { opacity: 0, y: 36 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 };
 
-const stagger = {
+const stagger: Variants = {
   visible: { transition: { staggerChildren: 0.1 } },
 };
 
-function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function Section({ children, className = '', id }: { children: React.ReactNode; className?: string; id?: string }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
   return (
     <motion.section
+      id={id}
       ref={ref}
       variants={stagger}
       initial="hidden"
