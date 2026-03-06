@@ -630,7 +630,7 @@ export default function BoardPage() {
                             className="absolute inset-0 z-[9950] bg-black flex justify-center items-center overflow-hidden"
                         >
                             <video 
-                                src={`http://localhost:8055/assets/${(match as any).active_ad_video}`} 
+                                src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${(match as any).active_ad_video}`} 
                                 autoPlay 
                                 loop 
                                 muted
@@ -836,7 +836,7 @@ export default function BoardPage() {
                         className="fixed inset-0 z-[9950] bg-black flex justify-center items-center overflow-hidden"
                     >
                         <video 
-                            src={`http://localhost:8055/assets/${(match as any).active_ad_video}`} 
+                            src={`${process.env.NEXT_PUBLIC_DIRECTUS_URL}/assets/${(match as any).active_ad_video}`} 
                             autoPlay 
                             loop 
                             muted
