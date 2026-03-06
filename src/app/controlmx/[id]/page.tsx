@@ -1,11 +1,13 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { directus } from '@/lib/directus';
 import { readItem, updateItem, readMe, readItems } from '@directus/sdk';
 import { Match, Player } from '@/types/directus';
 import { Play, Pause, ChevronLeft, ChevronRight, X, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
+import useWebSocket from 'react-use-websocket';
+import { toPng } from 'html-to-image';
 
 type ViewState = 'main' | 'actions' | 'substitution';
 
@@ -35,6 +37,12 @@ export default function ControlMXPage() {
     const [activePlayer, setActivePlayer] = useState<any | null>(null);
     const [localTimer, setLocalTimer] = useState(0);
 
+    // Ads State
+    const [textAds, setTextAds] = useState<any[]>([]);
+    const [videoAds, setVideoAds] = useState<any[]>([]);
+    const textAdIndexRef = useRef(0);
+    const videoAdIndexRef = useRef(0);
+
     // Check Auth
     useEffect(() => {
         const checkAuth = async () => {
@@ -54,6 +62,66 @@ export default function ControlMXPage() {
         checkAuth();
     }, [router]);
 
+    // WebSocket to local Logi C# Plugin
+    const { sendMessage: sendWsMessage, lastJsonMessage } = useWebSocket('ws://127.0.0.1:8081', {
+        shouldReconnect: () => true, // Automatically reconnect if plugin restarts
+        reconnectAttempts: 100,
+        reconnectInterval: 3000,
+    });
+
+    // Handle physical button presses from the Logi Plugin
+    useEffect(() => {
+        if (!lastJsonMessage) return;
+        const msg = lastJsonMessage as any;
+        if (msg.event === 'keyDown' && msg.actionId) {
+            // Mapping from Logi action names to our grid map
+            const actionMap: { [key: string]: number | string } = {
+                'mx_grid_0': 0, 'mx_grid_1': 1, 'mx_grid_2': 2,
+                'mx_grid_3': 3, 'mx_grid_4': 4, 'mx_grid_5': 5,
+                'mx_grid_6': 6, 'mx_grid_7': 7, 'mx_grid_8': 8,
+                'mx_team_local': 'home',
+                'mx_team_visitor': 'away'
+            };
+
+            const mapped = actionMap[msg.actionId];
+            if (typeof mapped === 'number') {
+                handleGridAction(mapped);
+            } else if (mapped === 'home' || mapped === 'away') {
+                setSelectedTeam(mapped);
+            }
+        }
+    }, [lastJsonMessage]);
+
+    // Stream Images to Logi Plugin
+    useEffect(() => {
+        const streamImages = async () => {
+            // We need to wait a tiny bit for React to render the new state before capturing
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            const images = [];
+            for (let i = 0; i < 9; i++) {
+                const node = document.getElementById(`mx_btn_${i}`);
+                if (node) {
+                    try {
+                        const dataUrl = await toPng(node, { quality: 0.8, pixelRatio: 1 });
+                        // Remove the prefix to just send raw base64
+                        const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
+                        images.push({ id: `mx_grid_${i}`, image: base64 });
+                    } catch (err) {
+                        console.error(`Failed to capture button ${i}`, err);
+                    }
+                }
+            }
+            if (images.length > 0) {
+                sendWsMessage(JSON.stringify({ type: 'UPDATE_IMAGES', keys: images }));
+            }
+        };
+
+        if (match) {
+            streamImages();
+        }
+    }, [match?.gamestate, selectedTeam, view, activePlayer, match?.status]); // Re-run when crucial state changes
+
     // Fetch match AND players
     useEffect(() => {
         if (!id || !isAuthenticated) return;
@@ -64,6 +132,16 @@ export default function ControlMXPage() {
                     fields: ['*', 'home_team.*', 'away_team.*'] as any
                 }))) as any as Match;
                 setMatch(matchData);
+
+                // Fetch Ads
+                try {
+                    const tAds = await directus.request(readItems('text_ads' as any, { filter: { match: { _eq: id } } as any }));
+                    setTextAds(tAds as any[]);
+                    const vAds = await directus.request(readItems('video_ads' as any, { filter: { match: { _eq: id } } as any }));
+                    setVideoAds(vAds as any[]);
+                } catch (adErr) {
+                    console.warn("Could not fetch ads:", adErr);
+                }
 
                 const homeTeamId = matchData.home_team ? String(typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
                 const awayTeamId = matchData.away_team ? String(typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
@@ -181,6 +259,34 @@ export default function ControlMXPage() {
                 timer_started_at: now
             }));
             setMatch(prev => ({ ...prev!, status: 'live', timer_started_at: now }));
+        }
+    };
+
+    const toggleTextAd = async () => {
+        if (!match || match.status !== 'paused' || textAds.length === 0) return;
+        if ((match as any).active_ad_text) {
+            await directus.request(updateItem('matches', match.id, { active_ad_text: null } as any));
+            setMatch(prev => ({ ...prev!, active_ad_text: null } as any));
+        } else {
+            const idx = textAdIndexRef.current;
+            const adContent = textAds[idx].content;
+            await directus.request(updateItem('matches', match.id, { active_ad_text: adContent } as any));
+            setMatch(prev => ({ ...prev!, active_ad_text: adContent } as any));
+            textAdIndexRef.current = (idx + 1) % textAds.length;
+        }
+    };
+
+    const toggleVideoAd = async () => {
+        if (!match || match.status !== 'paused' || videoAds.length === 0) return;
+        if ((match as any).active_ad_video) {
+            await directus.request(updateItem('matches', match.id, { active_ad_video: null } as any));
+            setMatch(prev => ({ ...prev!, active_ad_video: null } as any));
+        } else {
+            const idx = videoAdIndexRef.current;
+            const adVideo = videoAds[idx].video;
+            await directus.request(updateItem('matches', match.id, { active_ad_video: adVideo } as any));
+            setMatch(prev => ({ ...prev!, active_ad_video: adVideo } as any));
+            videoAdIndexRef.current = (idx + 1) % videoAds.length;
         }
     };
 
@@ -354,6 +460,10 @@ export default function ControlMXPage() {
                 }
             } else if (index === 6) {
                 toggleTimer();
+            } else if (index === 7) {
+                toggleTextAd();
+            } else if (index === 8) {
+                toggleVideoAd();
             }
         } else if (view === 'actions') {
             // Mapping:
@@ -415,6 +525,7 @@ export default function ControlMXPage() {
                         {[0, 1, 2].map(idx => (
                             <button
                                 key={idx}
+                                id={`mx_btn_${idx}`}
                                 onClick={() => handleGridAction(idx)}
                                 className={`rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all active:scale-95 group border-2 ${onCourt[idx]
                                     ? (selectedTeam === 'home' ? 'bg-purple-900/20 border-purple-500/30 hover:border-purple-500/60' : 'bg-green-900/20 border-green-500/30 hover:border-green-500/60')
@@ -440,6 +551,7 @@ export default function ControlMXPage() {
                         {[3, 4].map(idx => (
                             <button
                                 key={idx}
+                                id={`mx_btn_${idx}`}
                                 onClick={() => handleGridAction(idx)}
                                 className={`rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all active:scale-95 group border-2 ${onCourt[idx]
                                     ? (selectedTeam === 'home' ? 'bg-purple-900/20 border-purple-500/30 hover:border-purple-500/60' : 'bg-green-900/20 border-green-500/30 hover:border-green-500/60')
@@ -457,13 +569,14 @@ export default function ControlMXPage() {
                                 <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['A', 'S'][idx - 3]}</span>
                             </button>
                         ))}
-                        <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] flex items-center justify-center relative">
+                        <div id="mx_btn_5" className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] flex items-center justify-center relative">
                             <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">D</span>
                             <div className="w-8 h-[2px] bg-white/10"></div>
                         </div>
 
                         {/* Fila Inferior: 7, 8, 9 */}
                         <button
+                            id="mx_btn_6"
                             onClick={() => handleGridAction(6)}
                             className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${isRunning ? 'bg-amber-500/10 border-amber-500/30 text-amber-500 hover:border-amber-500/60' : 'bg-blue-500/10 border-blue-500/30 text-blue-500 hover:border-blue-500/60'
                                 }`}
@@ -472,12 +585,30 @@ export default function ControlMXPage() {
                             <span className="absolute bottom-4 text-[10px] uppercase font-black tracking-[0.2em]">{isRunning ? 'Pause' : 'Play'}</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">Z</span>
                         </button>
-                        <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">X</span>
-                        </div>
-                        <div className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">C</span>
-                        </div>
+                        <button
+                            id="mx_btn_7"
+                            onClick={() => handleGridAction(7)}
+                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${(!isRunning && (match as any).active_ad_text) ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/[0.02] border-white/5 hover:bg-white/5'}`}
+                        >
+                            {(!isRunning && (match as any).active_ad_text) ? (
+                                <span className="text-xl font-black mb-1 text-center">TEXT<br/>ON</span>
+                            ) : (
+                                <span className="text-cyan-500/20 text-[10px] font-black italic">TEXT AD</span>
+                            )}
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">X</span>
+                        </button>
+                        <button
+                            id="mx_btn_8"
+                            onClick={() => handleGridAction(8)}
+                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${(!isRunning && (match as any).active_ad_video) ? 'bg-pink-500/10 border-pink-500/30 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5)]' : 'bg-white/[0.02] border-white/5 hover:bg-white/5'}`}
+                        >
+                            {(!isRunning && (match as any).active_ad_video) ? (
+                                <span className="text-xl font-black mb-1 text-center">VIDEO<br/>ON</span>
+                            ) : (
+                                <span className="text-pink-500/20 text-[10px] font-black italic">VIDEO AD</span>
+                            )}
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">C</span>
+                        </button>
                     </>
                 )}
 
@@ -485,7 +616,7 @@ export default function ControlMXPage() {
                     <>
                         {/* +1, +2, +3 */}
                         {[1, 2, 3].map((v, i) => (
-                            <button key={i} onClick={() => handlePlayerAction('pts', v)} className="bg-blue-500/10 border-2 border-blue-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-blue-500/60 relative">
+                            <button id={`mx_btn_${i}`} key={i} onClick={() => handlePlayerAction('pts', v)} className="bg-blue-500/10 border-2 border-blue-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-blue-500/60 relative">
                                 <span className="text-6xl font-black text-blue-400 group-hover:scale-110 transition-transform">+{v}</span>
                                 <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['Q', 'W', 'E'][i]}</span>
                             </button>
@@ -493,22 +624,22 @@ export default function ControlMXPage() {
 
                         {/* -1, -2, -3 */}
                         {[1, 2, 3].map((v, i) => (
-                            <button key={i} onClick={() => handlePlayerAction('pts', -v)} className="bg-red-500/10 border-2 border-red-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-red-500/60 relative">
+                            <button id={`mx_btn_${i + 3}`} key={i} onClick={() => handlePlayerAction('pts', -v)} className="bg-red-500/10 border-2 border-red-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-red-500/60 relative">
                                 <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">-{v}</span>
                                 <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['A', 'S', 'D'][i]}</span>
                             </button>
                         ))}
 
                         {/* +F, -F, C */}
-                        <button onClick={() => handlePlayerAction('foul', 1)} className="bg-orange-500/10 border-2 border-orange-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-500/60 relative">
+                        <button id="mx_btn_6" onClick={() => handlePlayerAction('foul', 1)} className="bg-orange-500/10 border-2 border-orange-500/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-500/60 relative">
                             <span className="text-5xl font-black text-orange-400 tracking-tighter group-hover:scale-110">+F</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">Z</span>
                         </button>
-                        <button onClick={() => handlePlayerAction('foul', -1)} className="bg-orange-900/10 border-2 border-orange-900/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-900/60 relative">
+                        <button id="mx_btn_7" onClick={() => handlePlayerAction('foul', -1)} className="bg-orange-900/10 border-2 border-orange-900/30 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-orange-900/60 relative">
                             <span className="text-5xl font-black text-orange-900 tracking-tighter group-hover:scale-110">-F</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">X</span>
                         </button>
-                        <button onClick={() => setView('substitution')} className="bg-white/10 border-2 border-white/20 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-white/40 relative">
+                        <button id="mx_btn_8" onClick={() => setView('substitution')} className="bg-white/10 border-2 border-white/20 rounded-[2.5rem] flex flex-col items-center justify-center active:scale-95 transition-all group hover:border-white/40 relative">
                             <span className="text-6xl font-black text-white group-hover:rotate-12 transition-all">C</span>
                             <span className="absolute bottom-5 text-[10px] font-black uppercase tracking-widest opacity-40">Sub</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">C</span>
@@ -521,6 +652,7 @@ export default function ControlMXPage() {
                         {Array.from({ length: 9 }).map((_, idx) => (
                             <button
                                 key={idx}
+                                id={`mx_btn_${idx}`}
                                 onClick={() => handleGridAction(idx)}
                                 className={`rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all active:scale-95 group border-2 ${bench[idx]
                                     ? 'bg-blue-500/10 border-blue-500/30 hover:border-blue-500/60'

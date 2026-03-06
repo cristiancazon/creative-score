@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { directus } from '@/lib/directus';
 
@@ -33,6 +33,10 @@ export default function BoardPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [scale, setScale] = useState(1);
     const [localTimer, setLocalTimer] = useState(0);
+
+    // Score Animation State
+    const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number} | null>(null);
+    const prevStatsRef = useRef<any>(null);
 
     // Ultra-safe comparison helper
     const getStrId = (idInput: any) => {
@@ -297,6 +301,42 @@ export default function BoardPage() {
         return () => clearInterval(interval);
     }, [id, isPreview]);
 
+    // Score Delta Detector
+    useEffect(() => {
+        if (!match?.gamestate?.player_stats) return;
+
+        const currentStats = match.gamestate.player_stats;
+        const prevStats = prevStatsRef.current;
+
+        if (prevStats) {
+            for (const playerId in currentStats) {
+                const currentPoints = currentStats[playerId]?.points || 0;
+                const prevPoints = prevStats[playerId]?.points || 0;
+                const diff = currentPoints - prevPoints;
+
+                if (diff === 2 || diff === 3) {
+                    let team = null;
+                    let player = homePlayers.find(p => getStrId(p.id) === playerId);
+                    if (player) {
+                        team = homeTeam;
+                    } else {
+                        player = awayPlayers.find(p => getStrId(p.id) === playerId);
+                        if (player) team = awayTeam;
+                    }
+
+                    if (player && team) {
+                        setRecentScore({ player, team, points: diff });
+                        setTimeout(() => {
+                            setRecentScore(null);
+                        }, 4000); // Hide after 4s
+                    }
+                }
+            }
+        }
+
+        prevStatsRef.current = currentStats;
+    }, [match?.gamestate?.player_stats, homePlayers, awayPlayers, homeTeam, awayTeam]);
+
 
     if (loading) return (
         <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white">
@@ -323,6 +363,62 @@ export default function BoardPage() {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
+    // --- SCORE OVERLAY COMPONENT ---
+    const scoreOverlay = (
+        <AnimatePresence>
+            {recentScore && (
+                <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
+                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
+                >
+                    <motion.div 
+                        initial={{ y: 100, scale: 0.5, opacity: 0 }}
+                        animate={{ y: 0, scale: 1, opacity: 1 }}
+                        exit={{ scale: 1.5, opacity: 0, filter: "blur(20px)" }}
+                        transition={{ type: "spring", damping: 15, stiffness: 100 }}
+                        className="text-center flex flex-col items-center p-8 max-w-[90vw]"
+                    >
+                        <h2 
+                            className="text-4xl md:text-5xl uppercase tracking-[0.3em] font-medium mb-4 text-center"
+                            style={{ color: recentScore.team.primary_color || '#fff' }}
+                        >
+                            {recentScore.team.name}
+                        </h2>
+                        
+                        <h1 className="text-6xl md:text-9xl font-black uppercase text-white mb-6 drop-shadow-2xl text-center leading-tight">
+                            {recentScore.player.name}
+                        </h1>
+
+                        <motion.div
+                            initial={{ scale: 0, rotate: -20 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                            transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
+                            className="text-[12rem] md:text-[22rem] font-black italic leading-none"
+                            style={{ 
+                                color: recentScore.team.primary_color || '#fff',
+                                textShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                            }}
+                        >
+                            +{recentScore.points}
+                        </motion.div>
+
+                        {recentScore.points === 3 && (
+                            <motion.div
+                                animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+                                transition={{ repeat: Infinity, duration: 1 }}
+                                className="mt-12 text-5xl md:text-7xl font-bold italic text-orange-500 tracking-wider"
+                                style={{ textShadow: '0 0 30px rgba(249, 115, 22, 0.6)' }}
+                            >
+                                🔥 THREE POINTER 🔥
+                            </motion.div>
+                        )}
+                    </motion.div>
+                </motion.div>
+            )}
+        </AnimatePresence>
+    );
 
     // --- DYNAMIC RENDERER ---
     if (boardConfig.layout && boardConfig.layout.elements) {
@@ -504,6 +600,48 @@ export default function BoardPage() {
                         );
                     })}
                 </div>
+
+                {/* Text Ad Overlay */}
+                <AnimatePresence>
+                    {(match as any)?.active_ad_text && (
+                        <motion.div
+                            initial={{ y: -100, opacity: 0 }}
+                            animate={{ y: 0, opacity: 1 }}
+                            exit={{ y: -100, opacity: 0 }}
+                            transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                            className="absolute top-1/4 left-0 w-full z-[9900] flex justify-center pointer-events-none"
+                        >
+                            <div className="bg-black/80 backdrop-blur-md px-16 py-8 rounded-full border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                                <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-widest text-white text-center">
+                                    {(match as any).active_ad_text}
+                                </h1>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* Video Ad Overlay */}
+                <AnimatePresence>
+                    {(match as any)?.active_ad_video && (
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 z-[9950] bg-black flex justify-center items-center overflow-hidden"
+                        >
+                            <video 
+                                src={`http://localhost:8055/assets/${(match as any).active_ad_video}`} 
+                                autoPlay 
+                                loop 
+                                muted
+                                playsInline
+                                className="w-full h-full object-cover"
+                            />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {scoreOverlay}
             </div>
         );
     }
@@ -668,6 +806,48 @@ export default function BoardPage() {
                     </div>
                 )}
             </div>
+
+            {/* Text Ad Overlay */}
+            <AnimatePresence>
+                {(match as any)?.active_ad_text && (
+                    <motion.div
+                        initial={{ y: -100, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -100, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                        className="fixed top-1/4 left-0 w-full z-[9900] flex justify-center pointer-events-none"
+                    >
+                        <div className="bg-black/80 backdrop-blur-md px-16 py-8 rounded-full border-2 border-white/20 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
+                            <h1 className="text-5xl md:text-7xl font-bold uppercase tracking-widest text-white text-center">
+                                {(match as any).active_ad_text}
+                            </h1>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Video Ad Overlay */}
+            <AnimatePresence>
+                {(match as any)?.active_ad_video && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[9950] bg-black flex justify-center items-center overflow-hidden"
+                    >
+                        <video 
+                            src={`http://localhost:8055/assets/${(match as any).active_ad_video}`} 
+                            autoPlay 
+                            loop 
+                            muted
+                            playsInline
+                            className="w-full h-full object-cover"
+                        />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {scoreOverlay}
         </div>
     );
 }
