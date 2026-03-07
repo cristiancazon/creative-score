@@ -51,6 +51,8 @@ export interface Schema {
     players: Player[];
     matches: Match[];
     boards: Board[];
+    text_ads: TextAd[];
+    video_ads: VideoAd[];
 }
 
 export interface Board {
@@ -69,5 +71,18 @@ export interface Board {
     primary_color_away?: string;
     label_period?: string;
     label_fouls?: string;
-    layout?: any; // JSON configuration for Board Designer
+}
+
+export interface TextAd {
+    id: string;
+    content: string;
+    match?: string | Match;
+    sort?: number;
+}
+
+export interface VideoAd {
+    id: string;
+    video: string; // The UUID of the Directus File
+    match?: string | Match;
+    sort?: number;
 }

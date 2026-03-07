@@ -5,7 +5,7 @@ import { directus } from '@/lib/directus';
 import { useRouter } from 'next/navigation';
 import { readMe } from '@directus/sdk';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Trophy, Flag, LogOut, Swords, ChevronLeft, ChevronRight, Moon, Sun, Monitor } from 'lucide-react';
+import { LayoutDashboard, Users, Trophy, Flag, LogOut, Swords, ChevronLeft, ChevronRight, Moon, Sun, Monitor, MessageSquare, Video } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [authorized, setAuthorized] = useState(false);
@@ -103,6 +103,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <NavItem href="/admin/players" icon={<Users size={20} />} label="Players" isOpen={sidebarOpen} />
                     <NavItem href="/admin/matches" icon={<Swords size={20} />} label="Matches" isOpen={sidebarOpen} />
                     <NavItem href="/admin/boards" icon={<Monitor size={20} />} label="Boards" isOpen={sidebarOpen} />
+
+                    {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Ads & Media</div>}
+                    {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}
+
+                    <NavItem href="/admin/text-ads" icon={<MessageSquare size={20} />} label="Text Ads" isOpen={sidebarOpen} />
+                    <NavItem href="/admin/video-ads" icon={<Video size={20} />} label="Video Ads" isOpen={sidebarOpen} />
                 </nav>
 
                 <div className="p-4 border-t border-gray-800 space-y-2">
