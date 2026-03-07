@@ -71,6 +71,7 @@ export interface Board {
     primary_color_away?: string;
     label_period?: string;
     label_fouls?: string;
+    layout?: any; // JSON configuration for Board Designer
 }
 
 export interface TextAd {
