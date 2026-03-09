@@ -19,7 +19,7 @@ export default function ControlPage() {
     const [isEditingTime, setIsEditingTime] = useState(false);
     const [editMinutes, setEditMinutes] = useState(0);
     const [editSeconds, setEditSeconds] = useState(0);
-    const [periodDuration, setPeriodDuration] = useState(10); // Default 10 mins
+    const [periodDuration, setPeriodDuration] = useState(10); // Local state for the input, updated by match load
 
     // Player State
     const [homePlayers, setHomePlayers] = useState<any[]>([]);
@@ -60,6 +60,18 @@ export default function ControlPage() {
                     fields: ['*', 'home_team.*', 'away_team.*'] as any
                 })) as unknown as Match;
                 setMatch(matchData);
+
+                // Initialize local period duration based on whether we are in OT or regular, and user config
+                const maxPeriods = matchData.max_periods || 4;
+                const pLen = matchData.period_length || 10;
+                const otLen = matchData.overtime_length || 5;
+                const currentP = matchData.current_period || 1;
+                
+                if (currentP > maxPeriods) {
+                    setPeriodDuration(otLen);
+                } else {
+                    setPeriodDuration(pLen);
+                }
 
                 // 2. Fetch Players
                 const homeTeamId = typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team;
@@ -193,6 +205,22 @@ export default function ControlPage() {
             timer_started_at: null
         }));
         setMatch(prev => ({ ...prev!, timer_seconds: seconds, status: 'paused', timer_started_at: null }));
+    };
+
+    // Keep periodDuration in sync with period changes
+    const changePeriod = async (delta: number) => {
+        if (!match) return;
+        const newPeriod = Math.max(1, (match.current_period || 1) + delta);
+        
+        const maxPeriods = match.max_periods || 4;
+        const pLen = match.period_length || 10;
+        const otLen = match.overtime_length || 5;
+        
+        const newPeriodDuration = newPeriod > maxPeriods ? otLen : pLen;
+
+        setPeriodDuration(newPeriodDuration);
+        setMatch(prev => ({ ...prev!, current_period: newPeriod }));
+        directus.request(updateItem('matches', match.id, { current_period: newPeriod }));
     };
 
     const saveTime = async () => {
@@ -362,22 +390,18 @@ export default function ControlPage() {
                 {/* Period Control */}
                 <div className="flex items-center gap-4 text-slate-400">
                     <button
-                        onClick={() => {
-                            const newPeriod = Math.max(1, (match.current_period || 1) - 1);
-                            setMatch(prev => ({ ...prev!, current_period: newPeriod }));
-                            directus.request(updateItem('matches', match.id, { current_period: newPeriod }));
-                        }}
+                        onClick={() => changePeriod(-1)}
                         className="p-2 hover:bg-slate-700 rounded-lg"
                     >
                         &lt;
                     </button>
-                    <span className="font-bold tracking-widest">PERIOD {match.current_period}</span>
+                    <span className="font-bold tracking-widest uppercase">
+                        {match.current_period > (match.max_periods || 4) 
+                            ? `OT ${match.current_period - (match.max_periods || 4)}` 
+                            : `PERIOD ${match.current_period}`}
+                    </span>
                     <button
-                        onClick={() => {
-                            const newPeriod = (match.current_period || 1) + 1;
-                            setMatch(prev => ({ ...prev!, current_period: newPeriod }));
-                            directus.request(updateItem('matches', match.id, { current_period: newPeriod }));
-                        }}
+                        onClick={() => changePeriod(1)}
                         className="p-2 hover:bg-slate-700 rounded-lg"
                     >
                         &gt;

@@ -43,6 +43,9 @@ export interface Match {
     timer_started_at: string | null;
     gamestate: Record<string, any>;
     board?: string | Board; // The selected board theme
+    max_periods?: number;
+    period_length?: number;
+    overtime_length?: number;
 }
 
 export interface Schema {

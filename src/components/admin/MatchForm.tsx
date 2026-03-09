@@ -30,7 +30,10 @@ export default function MatchForm({ id }: MatchFormProps) {
         start_time: new Date().toISOString().slice(0, 16), // datetime-local format
         home_score: 0,
         away_score: 0,
-        timer_seconds: 0
+        timer_seconds: 0,
+        max_periods: 4,
+        period_length: 10,
+        overtime_length: 5
     });
 
     useEffect(() => {
@@ -252,6 +255,44 @@ export default function MatchForm({ id }: MatchFormProps) {
                             ))}
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Select the visual appearance for this match's scoreboard.</p>
+                    </div>
+
+                    {/* Custom Rules */}
+                    <div className="bg-gray-950/50 rounded-xl border border-gray-800/50 p-6 space-y-4">
+                        <h3 className="text-lg font-bold text-white mb-4">Game Custom Rules</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Max Regular Periods</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.max_periods || ''}
+                                    onChange={(e) => setFormData({ ...formData, max_periods: parseInt(e.target.value) || 4 })}
+                                    className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-blue-500"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">E.g. 4 for Basketball, 2 for Soccer.</p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Period Length (Minutes)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.period_length || ''}
+                                    onChange={(e) => setFormData({ ...formData, period_length: parseInt(e.target.value) || 10 })}
+                                    className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-blue-500"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-400 mb-2">Overtime Length (Minutes)</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={formData.overtime_length || ''}
+                                    onChange={(e) => setFormData({ ...formData, overtime_length: parseInt(e.target.value) || 5 })}
+                                    className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:ring-blue-500"
+                                />
+                            </div>
+                        </div>
                     </div>
 
                     {/* Initial Scores (Hidden for new mostly, but useful for edits) */}

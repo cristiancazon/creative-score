@@ -459,7 +459,12 @@ export default function BoardPage() {
                                 if (match.status === 'paused') extraStyle = { opacity: 0.5 };
                                 break;
                             case 'period':
-                                content = match.current_period;
+                                const maxPeriods = match.max_periods || 4;
+                                if (match.current_period > maxPeriods) {
+                                    content = `OT ${match.current_period - maxPeriods}`;
+                                } else {
+                                    content = match.current_period;
+                                }
                                 break;
                             case 'score_home':
                                 content = match.home_score;
@@ -656,7 +661,11 @@ export default function BoardPage() {
                 {boardConfig.show_period && (
                     <div className="flex flex-col items-center bg-gray-900/50 backdrop-blur-md px-6 py-3 rounded-xl border border-white/10 mx-auto">
                         <span className="text-sm uppercase tracking-widest opacity-70 mb-1">{boardConfig.label_period || 'PERIOD'}</span>
-                        <span className="text-4xl font-bold font-mono">{match.current_period}</span>
+                        <span className="text-4xl font-bold font-mono">
+                            {match.current_period > (match.max_periods || 4) 
+                                ? `OT ${match.current_period - (match.max_periods || 4)}` 
+                                : match.current_period}
+                        </span>
                     </div>
                 )}
             </div>
