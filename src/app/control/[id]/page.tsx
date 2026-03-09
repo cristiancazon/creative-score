@@ -276,10 +276,36 @@ export default function ControlPage() {
         const currentTeamFouls = Number(match.gamestate?.[foulField]) || 0;
         const newTeamFouls = Math.max(0, currentTeamFouls + (type === 'foul' ? value : 0));
 
-        // 3. Construct new GameState
+        // 3. Play-By-Play Logging (Events)
+        // If it's a positive number, we add it. If negative, we try to pop the last event of that type.
+        let updatedEvents = [...(match.gamestate?.events || [])];
+        
+        if (value > 0) {
+            updatedEvents.push({
+                id: Math.random().toString(36).substring(2, 9),
+                type,
+                value,
+                player_id: selectedPlayer.id,
+                team: selectedPlayer.team,
+                period: match.current_period || 1,
+                time_remaining: match.timer_seconds, // The clock at the moment the button was pressed
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            // Undo: Find the last event matching this player and type, and remove it
+            const idx = updatedEvents.map(e => ({...e})).reverse().findIndex(e => e.player_id === selectedPlayer.id && e.type === type);
+            if (idx !== -1) {
+                // Reverse index mapped to original array
+                const realIdx = updatedEvents.length - 1 - idx;
+                updatedEvents.splice(realIdx, 1);
+            }
+        }
+
+        // 4. Construct new GameState
         const newGamestate = {
             ...match.gamestate,
             [foulField]: newTeamFouls,
+            events: updatedEvents,
             player_stats: {
                 ...currentStats,
                 [selectedPlayer.id]: {
@@ -378,7 +404,14 @@ export default function ControlPage() {
             <header className="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
                 <h1 className="text-xl font-bold">Creative Score Controller</h1>
                 <div className="flex items-center gap-4">
-                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${isRunning ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+                    <button 
+                        onClick={() => window.open(`/report/${match.id}`, '_blank')}
+                        className="px-4 py-1.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition-colors flex items-center gap-2"
+                        title="Generate Official Match Report (A4 PDF)"
+                    >
+                        📋 Print Match Report
+                    </button>
+                    <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${isRunning ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                         {isRunning ? 'LIVE' : 'PAUSED'}
                     </span>
                 </div>
