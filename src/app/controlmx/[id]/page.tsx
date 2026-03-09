@@ -237,9 +237,64 @@ export default function ControlMXPage() {
         return () => clearInterval(interval);
     }, [match]);
 
+    // Auto-pause at 0
+    useEffect(() => {
+        if (localTimer === 0 && match?.status === 'live') {
+            const autoPause = async () => {
+                await directus.request(updateItem('matches', match.id, {
+                    status: 'paused',
+                    timer_seconds: 0,
+                    timer_started_at: null
+                }));
+                // @ts-ignore
+                setMatch(prev => prev ? { ...prev, status: 'paused', timer_seconds: 0, timer_started_at: null } : null);
+            };
+            autoPause();
+        }
+    }, [localTimer, match?.status]);
+
     // Actions
     const toggleTimer = async () => {
         if (!match) return;
+        const gamestate = match.gamestate || {};
+        const isET = gamestate.is_et;
+
+        if (localTimer === 0 && !isET) {
+            // Enter Half-Time (ET - 120s)
+            const now = new Date().toISOString();
+            const newGamestate = { ...gamestate, is_et: true };
+            await directus.request(updateItem('matches', match.id, {
+                status: 'live',
+                timer_seconds: 120,
+                timer_started_at: now,
+                gamestate: newGamestate
+            }));
+            // @ts-ignore
+            setMatch(prev => prev ? { ...prev, status: 'live', timer_seconds: 120, timer_started_at: now, gamestate: newGamestate } : null);
+            return;
+        }
+
+        if (isET) {
+            // End Half-Time and go to Next Period
+            const nextPeriod = (match.current_period || 1) + 1;
+            const maxPeriods = match.max_periods || 4;
+            const pLen = match.period_length || 10;
+            const otLen = match.overtime_length || 5;
+            const newSeconds = (nextPeriod > maxPeriods ? otLen : pLen) * 60;
+            const newGamestate = { ...gamestate, is_et: false };
+
+            await directus.request(updateItem('matches', match.id, {
+                status: 'paused',
+                timer_seconds: newSeconds,
+                timer_started_at: null,
+                current_period: nextPeriod,
+                gamestate: newGamestate
+            }));
+            // @ts-ignore
+            setMatch(prev => prev ? { ...prev, status: 'paused', timer_seconds: newSeconds, timer_started_at: null, current_period: nextPeriod, gamestate: newGamestate } : null);
+            return;
+        }
+
         const isLive = match.status === 'live';
         if (isLive) {
             const now = new Date().getTime();
@@ -314,9 +369,31 @@ export default function ControlMXPage() {
         const currentTeamFouls = Number(match.gamestate?.[foulField]) || 0;
         const newTeamFouls = Math.max(0, currentTeamFouls + (type === 'foul' ? value : 0));
 
+        let updatedEvents = [...(match.gamestate?.events || [])];
+        
+        if (value > 0) {
+            updatedEvents.push({
+                id: Math.random().toString(36).substring(2, 9),
+                type,
+                value,
+                player_id: activePlayer.id,
+                team: activePlayer.team || selectedTeam,
+                period: match.current_period || 1,
+                time_remaining: localTimer,
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            const idx = updatedEvents.map(e => ({...e})).reverse().findIndex(e => e.player_id === activePlayer.id && e.type === type);
+            if (idx !== -1) {
+                const realIdx = updatedEvents.length - 1 - idx;
+                updatedEvents.splice(realIdx, 1);
+            }
+        }
+
         const newGamestate = {
             ...match.gamestate,
             [foulField]: newTeamFouls,
+            events: updatedEvents,
             player_stats: {
                 ...currentStats,
                 [activePlayer.id]: {
@@ -493,6 +570,11 @@ export default function ControlMXPage() {
     const onCourt = getOnCourt();
     const bench = getBench();
     const isRunning = match.status === 'live';
+    const isET = match.gamestate?.is_et;
+
+    let timerActionLabel = isRunning ? 'Pause' : 'Play';
+    if (localTimer === 0 && !isET) timerActionLabel = 'ET (2m)';
+    else if (isET) timerActionLabel = 'Next Q';
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient">
@@ -562,6 +644,9 @@ export default function ControlMXPage() {
                                     <>
                                         <span className={`text-5xl font-black mb-1 transition-transform group-hover:scale-110 ${selectedTeam === 'home' ? 'text-purple-400' : 'text-green-400'}`}>{onCourt[idx].number}</span>
                                         <span className="text-[10px] uppercase font-black opacity-50 tracking-widest truncate w-full px-4 text-center">{onCourt[idx].name}</span>
+                                        {match.gamestate?.player_stats?.[onCourt[idx].id]?.fouls > 0 && (
+                                            <div className="absolute top-4 right-4 text-red-500 font-black text-xs">F:{match.gamestate.player_stats[onCourt[idx].id].fouls}</div>
+                                        )}
                                     </>
                                 ) : (
                                     <span className="text-white/10 text-[10px] font-black italic">VACÍO</span>
@@ -582,7 +667,7 @@ export default function ControlMXPage() {
                                 }`}
                         >
                             {isRunning ? <Pause size={48} fill="currentColor" /> : <Play size={48} fill="currentColor" className="ml-2" />}
-                            <span className="absolute bottom-4 text-[10px] uppercase font-black tracking-[0.2em]">{isRunning ? 'Pause' : 'Play'}</span>
+                            <span className="absolute bottom-4 text-[10px] uppercase font-black tracking-[0.1em]">{timerActionLabel}</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">Z</span>
                         </button>
                         <button

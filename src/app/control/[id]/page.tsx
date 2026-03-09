@@ -142,11 +142,12 @@ export default function ControlPage() {
         fetchData();
     }, [id, isAuthenticated]);
 
-    // Timer simulation for Control UI (visual only, independent of Board logic)
+    // Timer simulation for Control UI (visual only, independent of Board logic)    // Timer simulation
     useEffect(() => {
         let interval: NodeJS.Timeout;
         const updateLocalTimer = () => {
             if (!match) return;
+            if (isEditingTime) return; // Don't override while editing
 
             if (match.status === 'live' && match.timer_started_at) {
                 const now = new Date().getTime();
@@ -161,10 +162,65 @@ export default function ControlPage() {
         updateLocalTimer();
         interval = setInterval(updateLocalTimer, 200);
         return () => clearInterval(interval);
-    }, [match]);
+    }, [match, isEditingTime]);
+
+    // Auto-pause at 0
+    useEffect(() => {
+        if (localTimer === 0 && match?.status === 'live' && !isEditingTime) {
+            const autoPause = async () => {
+                await directus.request(updateItem('matches', match.id, {
+                    status: 'paused',
+                    timer_seconds: 0,
+                    timer_started_at: null
+                }));
+                // @ts-ignore
+                setMatch(prev => prev ? { ...prev, status: 'paused', timer_seconds: 0, timer_started_at: null } : null);
+            };
+            autoPause();
+        }
+    }, [localTimer, match?.status, isEditingTime]);
 
     const toggleTimer = async () => {
         if (!match) return;
+        const gamestate = match.gamestate || {};
+        const isET = gamestate.is_et;
+
+        if (localTimer === 0 && !isET) {
+            // Enter Half-Time (ET - 120s)
+            const now = new Date().toISOString();
+            const newGamestate = { ...gamestate, is_et: true };
+            await directus.request(updateItem('matches', match.id, {
+                status: 'live',
+                timer_seconds: 120,
+                timer_started_at: now,
+                gamestate: newGamestate
+            }));
+            // @ts-ignore
+            setMatch(prev => prev ? { ...prev, status: 'live', timer_seconds: 120, timer_started_at: now, gamestate: newGamestate } : null);
+            return;
+        }
+
+        if (isET) {
+            // End Half-Time and go to Next Period
+            const nextPeriod = (match.current_period || 1) + 1;
+            const maxPeriods = match.max_periods || 4;
+            const pLen = match.period_length || 10;
+            const otLen = match.overtime_length || 5;
+            const newSeconds = (nextPeriod > maxPeriods ? otLen : pLen) * 60;
+            const newGamestate = { ...gamestate, is_et: false };
+
+            await directus.request(updateItem('matches', match.id, {
+                status: 'paused',
+                timer_seconds: newSeconds,
+                timer_started_at: null,
+                current_period: nextPeriod,
+                gamestate: newGamestate
+            }));
+            // @ts-ignore
+            setMatch(prev => prev ? { ...prev, status: 'paused', timer_seconds: newSeconds, timer_started_at: null, current_period: nextPeriod, gamestate: newGamestate } : null);
+            setPeriodDuration(nextPeriod > maxPeriods ? otLen : pLen);
+            return;
+        }
 
         const isLive = match.status === 'live';
 
@@ -426,6 +482,7 @@ export default function ControlPage() {
     const homeName = typeof match.home_team === 'object' ? match.home_team.name : 'Home';
     const awayName = typeof match.away_team === 'object' ? match.away_team.name : 'Away';
     const isRunning = match.status === 'live';
+    const isET = match.gamestate?.is_et;
 
     // Roster Helpers
     // @ts-ignore
@@ -541,9 +598,21 @@ export default function ControlPage() {
                 <div className="flex items-center gap-6">
                     <button
                         onClick={toggleTimer}
-                        className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${isRunning ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500'}`}
+                        className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all shadow-lg text-white font-bold
+                            ${isET 
+                                ? 'bg-orange-600 hover:bg-orange-500' // skip ET
+                                : (localTimer === 0 
+                                    ? 'bg-purple-600 hover:bg-purple-500' // Start ET
+                                    : (isRunning ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500'))
+                            }`}
                     >
-                        {isRunning ? <Pause size={28} /> : <Play size={28} className="ml-1" />}
+                        {isET ? (
+                            <span className="text-sm">NEXT Q</span>
+                        ) : (localTimer === 0 ? (
+                            <span className="text-sm">Start ET</span>
+                        ) : (
+                            isRunning ? <Pause size={28} /> : <Play size={28} className="ml-1" />
+                        ))}
                     </button>
 
                     <div className="flex flex-col items-center gap-1">
