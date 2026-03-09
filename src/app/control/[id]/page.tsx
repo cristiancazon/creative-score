@@ -207,7 +207,7 @@ export default function ControlPage() {
             const pLen = match.period_length || 10;
             const otLen = match.overtime_length || 5;
             const newSeconds = (nextPeriod > maxPeriods ? otLen : pLen) * 60;
-            const newGamestate = { ...gamestate, is_et: false };
+            const newGamestate = { ...gamestate, is_et: false, home_timeouts: 0, away_timeouts: 0 };
 
             await directus.request(updateItem('matches', match.id, {
                 status: 'paused',
@@ -311,10 +311,11 @@ export default function ControlPage() {
         const otLen = match.overtime_length || 5;
         
         const newPeriodDuration = newPeriod > maxPeriods ? otLen : pLen;
+        const newGamestate = { ...match.gamestate, home_timeouts: 0, away_timeouts: 0 };
 
         setPeriodDuration(newPeriodDuration);
-        setMatch(prev => ({ ...prev!, current_period: newPeriod }));
-        directus.request(updateItem('matches', match.id, { current_period: newPeriod }));
+        setMatch(prev => ({ ...prev!, current_period: newPeriod, gamestate: newGamestate }));
+        directus.request(updateItem('matches', match.id, { current_period: newPeriod, gamestate: newGamestate }));
     };
 
     const saveTime = async () => {
@@ -338,7 +339,39 @@ export default function ControlPage() {
         setIsEditingTime(false);
     };
 
+    const handleTimeout = async (team: 'home' | 'away') => {
+        if (!match) return;
+        const field = team === 'home' ? 'home_timeouts' : 'away_timeouts';
+        const currentCount = match.gamestate?.[field] || 0;
 
+        if (currentCount >= 3) return; // limit 3 per quarter
+
+        const newGamestate = { ...match.gamestate, [field]: currentCount + 1 };
+        
+        // Pause timer if live
+        let newRemaining = localTimer;
+        let newStatus = match.status;
+
+        if (match.status === 'live') {
+            const startedAt = new Date(match.timer_started_at!).getTime();
+            const elapsed = Math.floor((new Date().getTime() - startedAt) / 1000);
+            newRemaining = Math.max(0, match.timer_seconds - elapsed);
+            newStatus = 'paused';
+        }
+
+        setMatch(prev => ({ ...prev!, status: newStatus as any, timer_seconds: newRemaining, timer_started_at: null, gamestate: newGamestate }));
+
+        try {
+            await directus.request(updateItem('matches', match.id, { 
+                gamestate: newGamestate,
+                status: newStatus,
+                timer_seconds: newRemaining,
+                timer_started_at: null
+            }));
+        } catch (e: any) {
+            console.error("TIMEOUT FAILED:", e);
+        }
+    };
 
     const handlePlayerAction = async (type: 'pts' | 'foul', value: number) => {
         if (!match || !selectedPlayer) return;
@@ -640,9 +673,30 @@ export default function ControlPage() {
             <div className="grid grid-cols-2 gap-6 flex-1 min-h-0 overflow-hidden">
                 {/* Home */}
                 <div className="bg-slate-800 p-4 rounded-2xl flex flex-col gap-4 border-t-4 border-purple-500 overflow-y-auto">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-2">
                         <h2 className="text-xl font-bold uppercase truncate">{homeName}</h2>
-                        <div className="text-4xl font-bold">{match.home_score}</div>
+                        <div className="flex flex-col items-end">
+                            <div className="text-4xl font-bold text-purple-400">{match.home_score}</div>
+                        </div>
+                    </div>
+                    {/* Timeouts and Fouls Strip */}
+                    <div className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg mb-2 border border-purple-500/30">
+                        <button 
+                            onClick={() => handleTimeout('home')}
+                            className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+                            title="Call Timeout (-1 to available)"
+                        >
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white">Timeouts</span>
+                            <div className="flex gap-1.5">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className={`w-3 h-3 rounded-full border border-red-500/50 ${i <= (match.gamestate?.home_timeouts || 0) ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-transparent'}`}></div>
+                                ))}
+                            </div>
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Fouls</span>
+                            <div className="text-lg font-black text-orange-500">{match.gamestate?.home_fouls || 0}</div>
+                        </div>
                     </div>
 
                     {/* Player Grid */}
@@ -677,9 +731,30 @@ export default function ControlPage() {
 
                 {/* Away */}
                 <div className="bg-slate-800 p-4 rounded-2xl flex flex-col gap-4 border-t-4 border-green-500 overflow-y-auto">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-between items-center mb-2">
                         <h2 className="text-xl font-bold uppercase truncate">{awayName}</h2>
-                        <div className="text-4xl font-bold">{match.away_score}</div>
+                        <div className="flex flex-col items-end">
+                            <div className="text-4xl font-bold text-green-400">{match.away_score}</div>
+                        </div>
+                    </div>
+                    {/* Timeouts and Fouls Strip */}
+                    <div className="flex justify-between items-center bg-slate-900/50 p-2 rounded-lg mb-2 border border-green-500/30">
+                        <button 
+                            onClick={() => handleTimeout('away')}
+                            className="flex items-center gap-2 group hover:opacity-80 transition-opacity"
+                            title="Call Timeout (-1 to available)"
+                        >
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest group-hover:text-white">Timeouts</span>
+                            <div className="flex gap-1.5">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className={`w-3 h-3 rounded-full border border-red-500/50 ${i <= (match.gamestate?.away_timeouts || 0) ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-transparent'}`}></div>
+                                ))}
+                            </div>
+                        </button>
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Fouls</span>
+                            <div className="text-lg font-black text-orange-500">{match.gamestate?.away_fouls || 0}</div>
+                        </div>
                     </div>
 
                     {/* Player Grid */}

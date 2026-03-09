@@ -281,7 +281,7 @@ export default function ControlMXPage() {
             const pLen = match.period_length || 10;
             const otLen = match.overtime_length || 5;
             const newSeconds = (nextPeriod > maxPeriods ? otLen : pLen) * 60;
-            const newGamestate = { ...gamestate, is_et: false };
+            const newGamestate = { ...gamestate, is_et: false, home_timeouts: 0, away_timeouts: 0 };
 
             await directus.request(updateItem('matches', match.id, {
                 status: 'paused',
@@ -342,6 +342,44 @@ export default function ControlMXPage() {
             await directus.request(updateItem('matches', match.id, { active_ad_video: adVideo } as any));
             setMatch(prev => ({ ...prev!, active_ad_video: adVideo } as any));
             videoAdIndexRef.current = (idx + 1) % videoAds.length;
+        }
+    };
+
+    const handleTimeout = async () => {
+        if (!match) return;
+        const field = selectedTeam === 'home' ? 'home_timeouts' : 'away_timeouts';
+        const currentFieldCount = match.gamestate?.[field] || 0;
+
+        if (currentFieldCount >= 3) return; // limit 3 per quarter
+
+        const newGamestate = {
+            ...match.gamestate,
+            [field]: currentFieldCount + 1
+        };
+
+        // Pause timer if live
+        let now = null;
+        let newRemaining = localTimer;
+        let newStatus = match.status;
+
+        if (match.status === 'live') {
+            const startedAt = new Date(match.timer_started_at!).getTime();
+            const elapsed = Math.floor((new Date().getTime() - startedAt) / 1000);
+            newRemaining = Math.max(0, match.timer_seconds - elapsed);
+            newStatus = 'paused';
+        }
+
+        setMatch(prev => ({ ...prev!, status: newStatus as any, timer_seconds: newRemaining, timer_started_at: null, gamestate: newGamestate }));
+
+        try {
+            await directus.request(updateItem('matches', match.id, { 
+                gamestate: newGamestate,
+                status: newStatus,
+                timer_seconds: newRemaining,
+                timer_started_at: null
+            }));
+        } catch (e: any) {
+            console.error("TIMEOUT FAILED:", e);
         }
     };
 
@@ -535,6 +573,8 @@ export default function ControlMXPage() {
                     setActivePlayer(players[index]);
                     setView('actions');
                 }
+            } else if (index === 5) {
+                handleTimeout();
             } else if (index === 6) {
                 toggleTimer();
             } else if (index === 7) {
@@ -654,10 +694,19 @@ export default function ControlMXPage() {
                                 <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">{['A', 'S'][idx - 3]}</span>
                             </button>
                         ))}
-                        <div id="mx_btn_5" className="rounded-[2.5rem] bg-white/[0.02] border-2 border-white/[0.05] flex items-center justify-center relative">
-                            <span className="absolute top-4 left-5 text-[10px] opacity-10 font-black">D</span>
-                            <div className="w-8 h-[2px] bg-white/10"></div>
-                        </div>
+                        <button
+                            id="mx_btn_5"
+                            onClick={() => handleGridAction(5)}
+                            className={`rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all active:scale-95 group border-2 ${(match.gamestate?.[selectedTeam === 'home' ? 'home_timeouts' : 'away_timeouts'] || 0) >= 3 ? 'bg-red-900/40 border-red-500/30' : 'bg-white/[0.02] border-white/[0.05] hover:border-white/20'}`}
+                        >
+                            <div className="flex gap-2 mb-2">
+                                {[1, 2, 3].map(i => (
+                                    <div key={i} className={`w-3 h-3 rounded-full ${i <= (match.gamestate?.[selectedTeam === 'home' ? 'home_timeouts' : 'away_timeouts'] || 0) ? 'bg-red-500 shadow-[0_0_8px_#ef4444]' : 'bg-white/10'}`}></div>
+                                ))}
+                            </div>
+                            <span className="text-[10px] uppercase font-black opacity-50 tracking-widest text-center">TIMEOUT</span>
+                            <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">D</span>
+                        </button>
 
                         {/* Fila Inferior: 7, 8, 9 */}
                         <button
