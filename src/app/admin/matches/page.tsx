@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { directus } from '@/lib/directus';
-import { readItems } from '@directus/sdk';
+import { updateItem, readItems } from '@directus/sdk';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2, Cpu } from 'lucide-react';
+import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2, Cpu, Printer, RotateCcw } from 'lucide-react';
 import { Match, Team, Sport } from '@/types/directus';
 
 export default function MatchesList() {
@@ -34,6 +34,44 @@ export default function MatchesList() {
         live: 'bg-green-900/40 text-green-400 border border-green-800/50',
         paused: 'bg-yellow-900/40 text-yellow-400 border border-yellow-800/50',
         finished: 'bg-blue-900/40 text-blue-400 border border-blue-800/50'
+    };
+
+    const handleResetMatch = async (match: Match) => {
+        const hTeam = typeof match.home_team === 'object' && match.home_team ? (match.home_team as Team).name : 'Home';
+        const aTeam = typeof match.away_team === 'object' && match.away_team ? (match.away_team as Team).name : 'Away';
+
+        const confirmed = window.confirm(`🚨 RESET MATCH 🚨\n\nAre you sure you want to completely erase scores, clock, and play-by-play events for:\n${hTeam} vs ${aTeam}?\n\nThis CANNOT be undone.`);
+        if (!confirmed) return;
+
+        const basePeriodLen = match.period_length || 10;
+        const seconds = basePeriodLen * 60;
+
+        const clearedGamestate = {
+            ...match.gamestate,
+            player_stats: {},
+            events: [],
+            home_on_court: [],
+            away_on_court: [],
+            home_fouls: 0,
+            away_fouls: 0
+        };
+
+        const resetData = {
+            home_score: 0,
+            away_score: 0,
+            current_period: 1,
+            timer_seconds: seconds,
+            status: 'paused',
+            timer_started_at: null,
+            gamestate: clearedGamestate
+        };
+
+        try {
+            await directus.request(updateItem('matches', match.id, resetData));
+            fetchMatches();
+        } catch (e: any) {
+            alert(`Failed to reset match: ${e.message}`);
+        }
     };
 
     return (
@@ -129,6 +167,22 @@ export default function MatchesList() {
                                                 title="Open MX Control"
                                             >
                                                 <Cpu size={18} />
+                                            </Link>
+                                            <div className="w-px h-6 bg-gray-800 mx-1"></div>
+                                            <button
+                                                onClick={() => handleResetMatch(match)}
+                                                className="p-2 hover:bg-gray-800 rounded-lg text-red-500 transition-colors"
+                                                title="Reset Match to 0"
+                                            >
+                                                <RotateCcw size={18} />
+                                            </button>
+                                            <Link
+                                                href={`/report/${match.id}`}
+                                                target="_blank"
+                                                className="p-2 hover:bg-gray-800 rounded-lg text-yellow-500 transition-colors"
+                                                title="Print Match Report"
+                                            >
+                                                <Printer size={18} />
                                             </Link>
                                             <div className="w-px h-6 bg-gray-800 mx-1"></div>
                                             <Link
