@@ -207,6 +207,44 @@ export default function ControlPage() {
         setMatch(prev => ({ ...prev!, timer_seconds: seconds, status: 'paused', timer_started_at: null }));
     };
 
+    const resetMatchFull = async () => {
+        if (!match) return;
+        const confirmed = window.confirm("🚨 ARE YOU SURE YOU WANT TO RESET THIS MATCH? 🚨\n\nThis will permanently erase all scores, fouls, periods, play-by-play events, and reset the clock. This action CANNOT be undone.");
+        if (!confirmed) return;
+
+        const basePeriodLen = match.period_length || 10;
+        const seconds = basePeriodLen * 60;
+
+        const clearedGamestate = {
+            ...match.gamestate,
+            player_stats: {},
+            events: [],
+            home_on_court: [],
+            away_on_court: [],
+            home_fouls: 0,
+            away_fouls: 0
+        };
+
+        const resetData = {
+            home_score: 0,
+            away_score: 0,
+            current_period: 1,
+            timer_seconds: seconds,
+            status: 'paused',
+            timer_started_at: null,
+            gamestate: clearedGamestate
+        };
+
+        try {
+            await directus.request(updateItem('matches', match.id, resetData));
+            setPeriodDuration(basePeriodLen);
+            // @ts-ignore
+            setMatch(prev => ({ ...prev!, ...resetData }));
+        } catch (e: any) {
+            alert(`Failed to reset match: ${e.message}`);
+        }
+    };
+
     // Keep periodDuration in sync with period changes
     const changePeriod = async (delta: number) => {
         if (!match) return;
@@ -402,7 +440,16 @@ export default function ControlPage() {
     return (
         <main className="min-h-screen bg-slate-900 text-slate-100 p-6 flex flex-col gap-6">
             <header className="flex justify-between items-center bg-slate-800 p-4 rounded-xl">
-                <h1 className="text-xl font-bold">Creative Score Controller</h1>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-xl font-bold mr-2">Creative Score Controller</h1>
+                    <button 
+                        onClick={resetMatchFull}
+                        className="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-900/40 text-red-500 hover:bg-red-600 hover:text-white border border-red-900 transition-colors uppercase tracking-wider"
+                        title="Erase all scores and reset match"
+                    >
+                        ⚠️ Reset Match
+                    </button>
+                </div>
                 <div className="flex items-center gap-4">
                     <button 
                         onClick={() => window.open(`/report/${match.id}`, '_blank')}

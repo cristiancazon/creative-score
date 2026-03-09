@@ -105,6 +105,9 @@ export default function MatchForm({ id }: MatchFormProps) {
 
         setFormData({
             ...data,
+            max_periods: data.max_periods ?? 4,
+            period_length: data.period_length ?? 10,
+            overtime_length: data.overtime_length ?? 5,
             sport: sportId as string,
             home_team: homeId as string,
             away_team: awayId as string,
