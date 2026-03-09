@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, use } from 'react';
-import directus from '@/lib/directus';
+import { directus } from '@/lib/directus';
 import { readItem, readItems } from '@directus/sdk';
 import { Match, Player } from '@/types/directus';
 
