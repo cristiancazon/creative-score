@@ -380,7 +380,7 @@ export default function ControlPage() {
                 type,
                 value,
                 player_id: selectedPlayer.id,
-                team: selectedPlayer.team,
+                team: isHome ? 'home' : 'away',
                 period: match.current_period || 1,
                 time_remaining: match.timer_seconds, // The clock at the moment the button was pressed
                 timestamp: new Date().toISOString()

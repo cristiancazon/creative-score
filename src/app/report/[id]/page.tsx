@@ -61,12 +61,15 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
     let currentHomeScore = 0;
     let currentAwayScore = 0;
 
+    const tHomeId = typeof match.home_team === 'object' ? match.home_team?.id : match.home_team;
+
     const progressiveLog = sortedEvents.map(e => {
+        const isHome = e.team === 'home' || e.team === tHomeId;
         if (e.type === 'pts') {
-            if (e.team === 'home') currentHomeScore += e.value;
+            if (isHome) currentHomeScore += e.value;
             else currentAwayScore += e.value;
         }
-        return { ...e, homeScore: currentHomeScore, awayScore: currentAwayScore };
+        return { ...e, isHome, homeScore: currentHomeScore, awayScore: currentAwayScore };
     });
 
     const formatTime = (secs: number) => {
@@ -237,10 +240,10 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                                             <tr key={ev.id || i} className="border-b border-gray-300">
                                                 <td className="border-r border-gray-300 p-1 font-bold text-[10px] text-gray-700">{ev.period > (match.max_periods || 4) ? `OT${ev.period - (match.max_periods || 4)}` : `Q${ev.period}`}</td>
                                                 <td className="border-r border-gray-300 p-1 text-[10px] font-mono text-gray-500 bg-gray-50">{formatTime(ev.time_remaining)}</td>
-                                                <td className={`border-r border-gray-300 p-1 font-bold ${ev.team === 'home' ? 'bg-purple-100 text-purple-900' : 'bg-blue-100 text-blue-900'}`}>
+                                                <td className={`border-r border-gray-300 p-1 font-bold ${ev.isHome ? 'bg-purple-100 text-purple-900' : 'bg-blue-100 text-blue-900'}`}>
                                                     {player?.number || '?'}
                                                 </td>
-                                                <td className={`border-r border-gray-300 p-1 ${ev.team === 'home' ? 'text-purple-900' : 'text-blue-900'}`}>
+                                                <td className={`border-r border-gray-300 p-1 ${ev.isHome ? 'text-purple-900' : 'text-blue-900'}`}>
                                                     {actionText}
                                                 </td>
                                                 <td className="p-1 font-mono font-bold bg-gray-100 border-gray-300">

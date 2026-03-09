@@ -377,7 +377,7 @@ export default function ControlMXPage() {
                 type,
                 value,
                 player_id: activePlayer.id,
-                team: activePlayer.team || selectedTeam,
+                team: selectedTeam,
                 period: match.current_period || 1,
                 time_remaining: localTimer,
                 timestamp: new Date().toISOString()
