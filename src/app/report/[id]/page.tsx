@@ -90,6 +90,84 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
         return <div className="flex gap-1">{boxes}</div>;
     };
 
+    const isFinished = match.status === 'finished';
+    let winnerName = null;
+    if (isFinished) {
+        if (match.home_score > match.away_score) winnerName = homeTeam?.name || 'Home';
+        else if (match.away_score > match.home_score) winnerName = awayTeam?.name || 'Away';
+        else winnerName = 'TIE';
+    }
+
+    // Pagination for Events
+    const EVENTS_PER_COLUMN = 45;
+    const EVENTS_PER_PAGE = EVENTS_PER_COLUMN * 2;
+    
+    const eventPages = [];
+    for (let i = 0; i < Math.max(1, Math.ceil(progressiveLog.length / EVENTS_PER_PAGE)); i++) {
+        eventPages.push(progressiveLog.slice(i * EVENTS_PER_PAGE, (i + 1) * EVENTS_PER_PAGE));
+    }
+
+    const Signatures = () => (
+        <div className="border-2 border-black mt-8 p-4 bg-white break-inside-avoid">
+            <h3 className="font-bold uppercase border-b-2 border-black pb-2 mb-12 text-center tracking-widest">Official Signatures</h3>
+            <div className="flex justify-between px-8">
+                <div className="text-center w-full">
+                    <div className="w-48 mx-auto border-b border-black mb-2"></div>
+                    <span className="text-sm font-bold text-gray-700">Scorer / Table Official</span>
+                </div>
+                <div className="text-center w-full">
+                    <div className="w-48 mx-auto border-b border-black mb-2"></div>
+                    <span className="text-sm font-bold text-gray-700">Main Referee</span>
+                </div>
+            </div>
+        </div>
+    );
+
+    const EventTable = ({ events, noEventsText = false }: { events: typeof progressiveLog, noEventsText?: boolean }) => (
+        <div className="border border-black">
+            <table className="w-full text-xs text-center border-collapse">
+                <thead className="bg-gray-200">
+                    <tr>
+                        <th className="border-b border-r border-black p-1 w-10">PER</th>
+                        <th className="border-b border-r border-black p-1 w-12">TIME</th>
+                        <th className="border-b border-r border-black p-1 w-8">#</th>
+                        <th className="border-b border-r border-black p-1">ACTION</th>
+                        <th className="border-b border-black p-1 font-mono tracking-widest bg-gray-300 w-16">A-B</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {events.map((ev, i) => {
+                        const player = [...homePlayers, ...awayPlayers].find(p => p.id === ev.player_id);
+                        const actionText = ev.type === 'pts' 
+                            ? <span className={ev.value > 0 ? 'text-green-700 font-bold' : 'text-red-700 whitespace-nowrap'}>{ev.value > 0 ? '+' : ''}{ev.value} PTS</span>
+                            : <span className="text-red-600 font-bold uppercase tracking-widest">FOUL</span>;
+                            
+                        return (
+                            <tr key={ev.id || i} className="border-b border-gray-300">
+                                <td className="border-r border-gray-300 p-1 font-bold text-[10px] text-gray-700">{ev.period > (match.max_periods || 4) ? `OT${ev.period - (match.max_periods || 4)}` : `Q${ev.period}`}</td>
+                                <td className="border-r border-gray-300 p-1 text-[10px] font-mono text-gray-500 bg-gray-50">{formatTime(ev.time_remaining)}</td>
+                                <td className={`border-r border-gray-300 p-1 font-bold ${ev.isHome ? 'bg-purple-100 text-purple-900' : 'bg-blue-100 text-blue-900'}`}>
+                                    {player?.number || '?'}
+                                </td>
+                                <td className={`border-r border-gray-300 p-1 ${ev.isHome ? 'text-purple-900' : 'text-blue-900'}`}>
+                                    {actionText}
+                                </td>
+                                <td className="p-1 font-mono font-bold bg-gray-100 border-gray-300">
+                                    {ev.homeScore}-{ev.awayScore}
+                                </td>
+                            </tr>
+                        )
+                    })}
+                    {events.length === 0 && noEventsText && (
+                        <tr>
+                            <td colSpan={5} className="p-8 text-gray-400 italic font-semibold">No progressive events recorded yet.</td>
+                        </tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+
     return (
         <div className="min-h-screen bg-gray-200 print:bg-white text-black p-8 font-sans">
             {/* Control Strip (Hidden on Print) */}
@@ -106,40 +184,50 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                 </button>
             </div>
 
-            {/* A4 Page Container */}
-            <div className="max-w-[210mm] mx-auto bg-white print:shadow-none shadow-lg print:w-full print:max-w-none border print:border-none border-gray-300">
+            {/* PAGE 1 Container */}
+            <div className="max-w-[210mm] min-h-[297mm] mx-auto bg-white print:shadow-none shadow-lg print:w-full print:max-w-none border print:border-none border-gray-300 mb-8 print:mb-0 print:break-after-page flex flex-col justify-between">
                 
-                {/* HEADERS */}
-                <header className="border-b-4 border-black p-6 flex justify-between items-end">
-                    <div>
-                        <h1 className="text-4xl font-black tracking-tighter uppercase mb-1">OFFICIAL MATCH REPORT</h1>
-                        <h2 className="text-xl font-bold mt-2 uppercase text-gray-800">Team A: {homeTeam?.name || 'Home'}</h2>
-                        <h2 className="text-xl font-bold uppercase text-gray-800">Team B: {awayTeam?.name || 'Away'}</h2>
-                    </div>
-                    <div className="text-right text-sm font-semibold space-y-1">
-                        <div><span className="text-gray-500">DATE:</span> {new Date(match.start_time).toLocaleDateString()}</div>
-                        <div><span className="text-gray-500">TIME:</span> {new Date(match.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
-                        <div><span className="text-gray-500">MATCH ID:</span> <span className="font-mono text-xs">{match.id}</span></div>
-                    </div>
-                </header>
-
-                <div className="p-6 grid grid-cols-12 gap-8">
-                    
-                    {/* LEFT COLUMN: ROSTERS */}
-                    <div className="col-span-7 space-y-8">
-                        {/* HOME TEAM */}
+                <div>
+                    {/* HEADERS */}
+                    <header className="border-b-4 border-black p-6 flex justify-between items-end">
                         <div>
-                            <div className="bg-black text-white px-3 py-1 font-bold text-lg uppercase flex justify-between">
+                            <h1 className="text-4xl font-black tracking-tighter uppercase mb-1">OFFICIAL MATCH REPORT</h1>
+                            <h2 className="text-xl font-bold mt-2 uppercase text-gray-800">Team A: {homeTeam?.name || 'Home'}</h2>
+                            <h2 className="text-xl font-bold uppercase text-gray-800">Team B: {awayTeam?.name || 'Away'}</h2>
+                            {isFinished && winnerName && winnerName !== 'TIE' && (
+                                <div className="mt-4 bg-black text-white px-4 py-2 inline-block font-bold text-lg uppercase">
+                                    WINNING TEAM: {winnerName}
+                                </div>
+                            )}
+                            {isFinished && winnerName === 'TIE' && (
+                                <div className="mt-4 bg-gray-500 text-white px-4 py-2 inline-block font-bold text-lg uppercase">
+                                    MATCH ENDED IN A TIE
+                                </div>
+                            )}
+                        </div>
+                        <div className="text-right text-sm font-semibold space-y-1">
+                            <div><span className="text-gray-500">DATE:</span> {new Date(match.start_time).toLocaleDateString()}</div>
+                            <div><span className="text-gray-500">TIME:</span> {new Date(match.start_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+                            <div><span className="text-gray-500">MATCH ID:</span> <span className="font-mono text-xs">{match.id}</span></div>
+                            <div className="pt-2"><span className="text-gray-500">STATUS:</span> <span className="font-bold uppercase">{match.status}</span></div>
+                        </div>
+                    </header>
+
+                    <div className="p-6 grid grid-cols-2 gap-8">
+                        
+                        {/* LEFT COLUMN: HOME TEAM */}
+                        <div className="col-span-1">
+                            <div className="bg-black text-white px-3 py-1 font-bold text-sm uppercase flex justify-between">
                                 <span>TEAM A: {homeTeam?.name || 'Home'}</span>
                                 <span>FINAL SCORE: {match.home_score}</span>
                             </div>
-                            <table className="w-full text-sm border-collapse border border-black mt-2">
+                            <table className="w-full text-xs border-collapse border border-black mt-2">
                                 <thead>
                                     <tr className="bg-gray-200">
                                         <th className="border border-black p-1 w-8 text-center">#</th>
                                         <th className="border border-black p-1 text-left px-2">Player Name</th>
                                         <th className="border border-black p-1 w-12 text-center">PTS</th>
-                                        <th className="border border-black p-1 w-32 text-center">FOULS</th>
+                                        <th className="border border-black p-1 w-24 text-center">FOULS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -148,7 +236,7 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                                         return (
                                             <tr key={p.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                                 <td className="border border-black p-1 text-center font-bold">{p.number}</td>
-                                                <td className="border border-black p-1 px-2 uppercase truncate max-w-[150px] font-semibold text-gray-800">{p.name}</td>
+                                                <td className="border border-black p-1 px-2 uppercase truncate max-w-[120px] font-semibold text-gray-800">{p.name}</td>
                                                 <td className="border border-black p-1 text-center font-bold">{stats.points}</td>
                                                 <td className="border border-black p-1 flex justify-center py-1.5">
                                                     {renderFoulBoxes(stats.fouls)}
@@ -160,19 +248,19 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                             </table>
                         </div>
 
-                        {/* AWAY TEAM */}
-                        <div>
-                            <div className="bg-black text-white px-3 py-1 font-bold text-lg uppercase flex justify-between">
+                        {/* RIGHT COLUMN: AWAY TEAM */}
+                        <div className="col-span-1">
+                            <div className="bg-black text-white px-3 py-1 font-bold text-sm uppercase flex justify-between">
                                 <span>TEAM B: {awayTeam?.name || 'Away'}</span>
                                 <span>FINAL SCORE: {match.away_score}</span>
                             </div>
-                            <table className="w-full text-sm border-collapse border border-black mt-2">
+                            <table className="w-full text-xs border-collapse border border-black mt-2">
                                 <thead>
                                     <tr className="bg-gray-200">
                                         <th className="border border-black p-1 w-8 text-center">#</th>
                                         <th className="border border-black p-1 text-left px-2">Player Name</th>
                                         <th className="border border-black p-1 w-12 text-center">PTS</th>
-                                        <th className="border border-black p-1 w-32 text-center">FOULS</th>
+                                        <th className="border border-black p-1 w-24 text-center">FOULS</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -181,7 +269,7 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                                         return (
                                             <tr key={p.id} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                                                 <td className="border border-black p-1 text-center font-bold">{p.number}</td>
-                                                <td className="border border-black p-1 px-2 uppercase truncate max-w-[150px] font-semibold text-gray-800">{p.name}</td>
+                                                <td className="border border-black p-1 px-2 uppercase truncate max-w-[120px] font-semibold text-gray-800">{p.name}</td>
                                                 <td className="border border-black p-1 text-center font-bold">{stats.points}</td>
                                                 <td className="border border-black p-1 flex justify-center py-1.5">
                                                     {renderFoulBoxes(stats.fouls)}
@@ -192,78 +280,49 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
                                 </tbody>
                             </table>
                         </div>
-
-                        {/* SIGNATURES */}
-                        <div className="border-2 border-black mt-12 p-4">
-                            <h3 className="font-bold uppercase border-b-2 border-black pb-2 mb-12 text-center tracking-widest">Official Signatures</h3>
-                            <div className="flex justify-between px-8">
-                                <div className="text-center w-full">
-                                    <div className="w-48 mx-auto border-b border-black mb-2"></div>
-                                    <span className="text-sm font-bold text-gray-700">Scorer / Table Official</span>
-                                </div>
-                                <div className="text-center w-full">
-                                    <div className="w-48 mx-auto border-b border-black mb-2"></div>
-                                    <span className="text-sm font-bold text-gray-700">Main Referee</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div className="text-center text-xs text-gray-400 mt-4">
-                            Generated by Creative Score (Powered by XEREX)
-                        </div>
-                    </div>
-
-                    {/* RIGHT COLUMN: PROGRESSIVE SCORE (PLAY BY PLAY) */}
-                    <div className="col-span-5 flex flex-col h-full min-h-[500px]">
-                        <div className="bg-black text-white px-3 py-1 font-bold text-sm uppercase text-center border-t border-l border-r border-black tracking-widest">
-                            Progressive Events
-                        </div>
-                        <div className="border-l border-r border-b border-black flex-1 p-0 pb-4">
-                            <table className="w-full text-xs text-center border-collapse">
-                                <thead className="bg-gray-200">
-                                    <tr>
-                                        <th className="border-b border-r border-black p-1 w-10">PER</th>
-                                        <th className="border-b border-r border-black p-1 w-12">TIME</th>
-                                        <th className="border-b border-r border-black p-1 w-8">#</th>
-                                        <th className="border-b border-r border-black p-1">ACTION</th>
-                                        <th className="border-b border-black p-1 font-mono tracking-widest bg-gray-300 w-16">A-B</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {progressiveLog.map((ev, i) => {
-                                        const player = [...homePlayers, ...awayPlayers].find(p => p.id === ev.player_id);
-                                        const actionText = ev.type === 'pts' 
-                                            ? <span className={ev.value > 0 ? 'text-green-700 font-bold' : 'text-red-700 whitespace-nowrap'}>{ev.value > 0 ? '+' : ''}{ev.value} PTS</span>
-                                            : <span className="text-red-600 font-bold uppercase tracking-widest">Foul</span>;
-                                            
-                                        return (
-                                            <tr key={ev.id || i} className="border-b border-gray-300">
-                                                <td className="border-r border-gray-300 p-1 font-bold text-[10px] text-gray-700">{ev.period > (match.max_periods || 4) ? `OT${ev.period - (match.max_periods || 4)}` : `Q${ev.period}`}</td>
-                                                <td className="border-r border-gray-300 p-1 text-[10px] font-mono text-gray-500 bg-gray-50">{formatTime(ev.time_remaining)}</td>
-                                                <td className={`border-r border-gray-300 p-1 font-bold ${ev.isHome ? 'bg-purple-100 text-purple-900' : 'bg-blue-100 text-blue-900'}`}>
-                                                    {player?.number || '?'}
-                                                </td>
-                                                <td className={`border-r border-gray-300 p-1 ${ev.isHome ? 'text-purple-900' : 'text-blue-900'}`}>
-                                                    {actionText}
-                                                </td>
-                                                <td className="p-1 font-mono font-bold bg-gray-100 border-gray-300">
-                                                    {ev.homeScore}-{ev.awayScore}
-                                                </td>
-                                            </tr>
-                                        )
-                                    })}
-                                    {progressiveLog.length === 0 && (
-                                        <tr>
-                                            <td colSpan={5} className="p-8 text-gray-400 italic font-semibold">No progressive events recorded yet.</td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 </div>
 
+                <div className="p-6">
+                    <Signatures />
+                    <div className="text-center text-xs text-gray-400 mt-4">
+                        Generated by Creative Score (Powered by XEREX) - Sheet 1 (Main Data)
+                    </div>
+                </div>
             </div>
+
+            {/* PAGE 2+: PROGRESSIVE EVENTS */}
+            {eventPages.map((pageEvents, pageIndex) => {
+                const col1 = pageEvents.slice(0, EVENTS_PER_COLUMN);
+                const col2 = pageEvents.slice(EVENTS_PER_COLUMN, EVENTS_PER_PAGE);
+
+                return (
+                    <div key={pageIndex} className="max-w-[210mm] min-h-[297mm] mx-auto bg-white print:shadow-none shadow-lg print:w-full print:max-w-none border print:border-none border-gray-300 flex flex-col justify-between mb-8 print:mb-0 print:break-after-page">
+                        <div>
+                            <header className="border-b-4 border-black p-6 flex justify-between items-center">
+                                <h1 className="text-2xl font-black tracking-tighter uppercase">PROGRESSIVE EVENTS</h1>
+                                <span className="text-sm font-bold text-gray-500">Continuation - Sheet {pageIndex + 2}</span>
+                            </header>
+                            
+                            <div className="p-6 grid grid-cols-2 gap-8">
+                                <div className="col-span-1">
+                                    <EventTable events={col1} noEventsText={pageIndex === 0} />
+                                </div>
+                                <div className="col-span-1">
+                                    {col2.length > 0 && <EventTable events={col2} />}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="p-6">
+                            <Signatures />
+                            <div className="text-center text-xs text-gray-400 mt-4">
+                                Generated by Creative Score (Powered by XEREX) - Sheet {pageIndex + 2}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })}
         </div>
     );
 }

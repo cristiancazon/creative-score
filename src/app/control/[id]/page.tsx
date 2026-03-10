@@ -182,10 +182,27 @@ export default function ControlPage() {
 
     const toggleTimer = async () => {
         if (!match) return;
+        if (match.status === 'finished') return; // Do nothing if the game is already finished
+
         const gamestate = match.gamestate || {};
         const isET = gamestate.is_et;
 
         if (localTimer === 0 && !isET) {
+            const isGameOver = (match.current_period || 1) >= (match.max_periods || 4) && match.home_score !== match.away_score;
+
+            if (isGameOver) {
+                const newGamestate = { ...gamestate, is_et: false };
+                await directus.request(updateItem('matches', match.id, {
+                    status: 'finished',
+                    timer_seconds: 0,
+                    timer_started_at: null,
+                    gamestate: newGamestate
+                }));
+                // @ts-ignore
+                setMatch(prev => prev ? { ...prev, status: 'finished', timer_seconds: 0, timer_started_at: null, gamestate: newGamestate } : null);
+                return;
+            }
+
             // Enter Half-Time (ET - 120s)
             const now = new Date().toISOString();
             const newGamestate = { ...gamestate, is_et: true };
@@ -631,21 +648,17 @@ export default function ControlPage() {
                 <div className="flex items-center gap-6">
                     <button
                         onClick={toggleTimer}
-                        className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all shadow-lg text-white font-bold
-                            ${isET 
-                                ? 'bg-orange-600 hover:bg-orange-500' // skip ET
-                                : (localTimer === 0 
-                                    ? 'bg-purple-600 hover:bg-purple-500' // Start ET
-                                    : (isRunning ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500'))
+                        className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all shadow-lg text-white font-bold text-center leading-tight
+                            ${match.status === 'finished'
+                                ? 'bg-red-700 cursor-not-allowed'
+                                : (isET 
+                                    ? 'bg-orange-600 hover:bg-orange-500' // skip ET
+                                    : (localTimer === 0 
+                                        ? (((match.current_period || 1) >= (match.max_periods || 4) && match.home_score !== match.away_score) ? 'bg-red-600 hover:bg-red-500' : 'bg-purple-600 hover:bg-purple-500') // Start ET or Finish
+                                        : (isRunning ? 'bg-yellow-600 hover:bg-yellow-500' : 'bg-green-600 hover:bg-green-500')))
                             }`}
                     >
-                        {isET ? (
-                            <span className="text-sm">NEXT Q</span>
-                        ) : (localTimer === 0 ? (
-                            <span className="text-sm">Start ET</span>
-                        ) : (
-                            isRunning ? <Pause size={28} /> : <Play size={28} className="ml-1" />
-                        ))}
+                        {match.status === 'finished' ? 'FINISHED' : (isET ? 'NEXT Q' : (localTimer === 0 ? (((match.current_period || 1) >= (match.max_periods || 4) && match.home_score !== match.away_score) ? 'FINISH MATCH' : 'ET (2m)') : (isRunning ? <Pause size={32} /> : <Play size={32} className="ml-2" />)))}
                     </button>
 
                     <div className="flex flex-col items-center gap-1">

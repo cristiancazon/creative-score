@@ -256,10 +256,27 @@ export default function ControlMXPage() {
     // Actions
     const toggleTimer = async () => {
         if (!match) return;
+        if (match.status === 'finished') return; // Do nothing if the game is already finished
+
         const gamestate = match.gamestate || {};
         const isET = gamestate.is_et;
 
         if (localTimer === 0 && !isET) {
+            const isGameOver = (match.current_period || 1) >= (match.max_periods || 4) && match.home_score !== match.away_score;
+
+            if (isGameOver) {
+                const newGamestate = { ...gamestate, is_et: false };
+                await directus.request(updateItem('matches', match.id, {
+                    status: 'finished',
+                    timer_seconds: 0,
+                    timer_started_at: null,
+                    gamestate: newGamestate
+                }));
+                // @ts-ignore
+                setMatch(prev => prev ? { ...prev, status: 'finished', timer_seconds: 0, timer_started_at: null, gamestate: newGamestate } : null);
+                return;
+            }
+
             // Enter Half-Time (ET - 120s)
             const now = new Date().toISOString();
             const newGamestate = { ...gamestate, is_et: true };
@@ -611,9 +628,11 @@ export default function ControlMXPage() {
     const bench = getBench();
     const isRunning = match.status === 'live';
     const isET = match.gamestate?.is_et;
+    const isGameOver = (match.current_period || 1) >= (match.max_periods || 4) && match.home_score !== match.away_score;
 
     let timerActionLabel = isRunning ? 'Pause' : 'Play';
-    if (localTimer === 0 && !isET) timerActionLabel = 'ET (2m)';
+    if (match.status === 'finished') timerActionLabel = 'Finish';
+    else if (localTimer === 0 && !isET) timerActionLabel = isGameOver ? 'Finish' : 'ET (2m)';
     else if (isET) timerActionLabel = 'Next Q';
 
     return (
