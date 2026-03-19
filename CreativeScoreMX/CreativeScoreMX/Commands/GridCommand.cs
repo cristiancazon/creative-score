@@ -39,7 +39,7 @@ namespace Loupedeck.CreativeScoreMX.Commands
             // Fallback: draw a basic text box
             using (var bitmapBuilder = new BitmapBuilder(imageSize))
             {
-                bitmapBuilder.Clear(BitmapColor.DarkRed);
+                bitmapBuilder.Clear(BitmapColor.Black);
                 bitmapBuilder.DrawText(_actionId.Replace("mx_grid_", "G").Replace("mx_team_", ""), BitmapColor.White);
                 return bitmapBuilder.ToImage();
             }
