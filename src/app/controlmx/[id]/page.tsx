@@ -107,9 +107,9 @@ export default function ControlMXPage() {
                             quality: 0.8, 
                             pixelRatio: 1,
                             backgroundColor: '#0a0a0a',
-                            width: 256,
-                            height: 256, // Restored 1:1 aspect ratio for edge-to-edge rendering with zero-width space hack
-                            style: { width: '256px', height: '256px', margin: '0', borderRadius: '0' }
+                            width: 250,
+                            height: 150, // 5:3 aspect ratio strictly fills the trapped Logi 'Icon Above Text' layout mask
+                            style: { width: '250px', height: '150px', margin: '0', borderRadius: '1.5rem', display: 'flex' }
                         });
                         // Remove the prefix to just send raw base64
                         const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
