@@ -47,8 +47,8 @@ namespace Loupedeck.CreativeScoreMX.Commands
 
         protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
         {
-            // Return empty string to prevent Logi Options+ from drawing the action name over our images
-            return " ";
+            // Return exactly string.Empty to tell Logi Options+ to collapse the text box
+            return "";
         }
     }
 
