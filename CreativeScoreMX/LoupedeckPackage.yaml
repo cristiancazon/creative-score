@@ -1,8 +1,8 @@
 type: plugin4
 name: 'CreativeScoreMX'
 displayName: 'CreativeScoreMX'
-version: 1.0.3
-author: XeroxDev
+version: 1.0.4
+author: Cristian Cazón de XereX
 copyright: Copyright (c) 2021 Dominic Ris
 
 supportedDevices:
@@ -14,5 +14,5 @@ pluginFileName: CreativeScoreMX.dll
 pluginFolderWin: ./bin/win/
 license: MIT
 licenseUrl: https://opensource.org/licenses/MIT
-homePageUrl: https://help.xeroxdev.de
+homePageUrl: https://create.xerex.tech
 supportPageUrl: https://s.tswi.me/discord

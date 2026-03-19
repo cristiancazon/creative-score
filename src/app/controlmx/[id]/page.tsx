@@ -127,7 +127,7 @@ export default function ControlMXPage() {
         if (match) {
             streamImages();
         }
-    }, [match?.gamestate, selectedTeam, view, activePlayer, match?.status]); // Re-run when crucial state changes
+    }, [match?.gamestate, selectedTeam, view, activePlayer?.id, match?.status]); // Re-run when crucial state changes
 
     // Fetch match AND players
     useEffect(() => {
