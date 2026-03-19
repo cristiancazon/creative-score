@@ -108,8 +108,8 @@ export default function ControlMXPage() {
                             pixelRatio: 1,
                             backgroundColor: '#0a0a0a',
                             width: 256,
-                            height: 170, // Optimized 3:2 aspect ratio for Logi Options+ "Icon above Text" layout space
-                            style: { width: '256px', height: '170px', margin: '0', borderRadius: '0' }
+                            height: 256, // Restored 1:1 aspect ratio for edge-to-edge rendering with zero-width space hack
+                            style: { width: '256px', height: '256px', margin: '0', borderRadius: '0' }
                         });
                         // Remove the prefix to just send raw base64
                         const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
