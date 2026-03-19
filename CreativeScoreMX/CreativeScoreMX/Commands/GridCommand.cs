@@ -44,6 +44,12 @@ namespace Loupedeck.CreativeScoreMX.Commands
                 return bitmapBuilder.ToImage();
             }
         }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            // Return empty string to prevent Logi Options+ from drawing the action name over our images
+            return " ";
+        }
     }
 
     public class Grid0Command : BaseScoreCommand { public Grid0Command() : base("mx_grid_0", "Grid 0", "MX Grid Actions") { } }
