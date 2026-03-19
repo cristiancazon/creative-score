@@ -47,8 +47,8 @@ namespace Loupedeck.CreativeScoreMX.Commands
 
         protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
         {
-            // Return a single space to hide text but prevent fallback to action ID
-            return " ";
+            // Return zero-width space to hide text but trick layout into zero-pixel bounding height
+            return "\u200B";
         }
     }
 
