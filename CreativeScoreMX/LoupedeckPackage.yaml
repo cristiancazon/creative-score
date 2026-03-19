@@ -1,0 +1,18 @@
+type: plugin4
+name: 'CreativeScoreMX'
+displayName: 'CreativeScoreMX'
+version: 1.0.2
+author: XeroxDev
+copyright: Copyright (c) 2021 Dominic Ris
+
+supportedDevices:
+  - LoupedeckCt
+  - LoupedeckLive
+  - LogitechMxCreative
+
+pluginFileName: CreativeScoreMX.dll
+pluginFolderWin: ./bin/win/
+license: MIT
+licenseUrl: https://opensource.org/licenses/MIT
+homePageUrl: https://help.xeroxdev.de
+supportPageUrl: https://s.tswi.me/discord

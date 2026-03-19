@@ -96,7 +96,7 @@ export default function ControlMXPage() {
     useEffect(() => {
         const streamImages = async () => {
             // We need to wait a tiny bit for React to render the new state before capturing
-            await new Promise(resolve => setTimeout(resolve, 50));
+            await new Promise(resolve => setTimeout(resolve, 200));
 
             const images = [];
             for (let i = 0; i < 9; i++) {
@@ -113,6 +113,7 @@ export default function ControlMXPage() {
                 }
             }
             if (images.length > 0) {
+                console.log(`[Logi] Streaming ${images.length} images to WS plugin`);
                 sendWsMessage(JSON.stringify({ type: 'UPDATE_IMAGES', keys: images }));
             }
         };
