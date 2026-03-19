@@ -103,7 +103,13 @@ export default function ControlMXPage() {
                 const node = document.getElementById(`mx_btn_${i}`);
                 if (node) {
                     try {
-                        const dataUrl = await toPng(node, { quality: 0.8, pixelRatio: 1 });
+                        const dataUrl = await toPng(node, { 
+                            quality: 0.8, 
+                            pixelRatio: 1,
+                            backgroundColor: '#0a0a0a',
+                            canvasWidth: 90,
+                            canvasHeight: 90
+                        });
                         // Remove the prefix to just send raw base64
                         const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
                         images.push({ id: `mx_grid_${i}`, image: base64 });
