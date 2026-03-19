@@ -106,9 +106,7 @@ export default function ControlMXPage() {
                         const dataUrl = await toPng(node, { 
                             quality: 0.8, 
                             pixelRatio: 1,
-                            backgroundColor: '#0a0a0a',
-                            canvasWidth: 90,
-                            canvasHeight: 90
+                            backgroundColor: '#0a0a0a'
                         });
                         // Remove the prefix to just send raw base64
                         const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
