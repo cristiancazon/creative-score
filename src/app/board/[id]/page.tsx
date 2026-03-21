@@ -397,16 +397,16 @@ export default function BoardPage() {
                         animate={{ y: 0, scale: 1, opacity: 1 }}
                         exit={{ scale: 1.5, opacity: 0, filter: "blur(20px)" }}
                         transition={{ type: "spring", damping: 15, stiffness: 100 }}
-                        className="text-center flex flex-col items-center p-8 max-w-[90vw]"
+                        className="text-center flex flex-col items-center p-4 max-w-full"
                     >
                         <h2 
-                            className="text-4xl md:text-5xl uppercase tracking-[0.3em] font-medium mb-4 text-center"
+                            className="text-xl md:text-2xl uppercase tracking-[0.3em] font-medium mb-2 text-center"
                             style={{ color: recentScore.team.primary_color || '#fff' }}
                         >
                             {recentScore.team.name}
                         </h2>
                         
-                        <h1 className="text-6xl md:text-9xl font-black uppercase text-white mb-6 drop-shadow-2xl text-center leading-tight">
+                        <h1 className="text-3xl md:text-5xl font-black uppercase text-white mb-4 drop-shadow-2xl text-center leading-tight">
                             {recentScore.player.name}
                         </h1>
 
@@ -414,17 +414,17 @@ export default function BoardPage() {
                             initial={{ scale: 0, rotate: -20 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
-                            className="text-[12rem] md:text-[22rem] font-black italic leading-none flex items-center justify-center gap-6"
+                            className="text-6xl md:text-8xl font-black italic leading-none flex items-center justify-center gap-4"
                             style={{ 
                                 color: recentScore.team.primary_color || '#fff',
-                                textShadow: '0 20px 50px rgba(0,0,0,0.5)'
+                                textShadow: '0 10px 30px rgba(0,0,0,0.5)'
                             }}
                         >
                             {recentScore.points === 3 && (
                                 <motion.span 
                                     animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
                                     transition={{ repeat: Infinity, duration: 1 }}
-                                    className="text-8xl md:text-9xl"
+                                    className="text-4xl md:text-6xl"
                                 >🔥</motion.span>
                             )}
                             <span>+{recentScore.points}</span>
@@ -432,7 +432,7 @@ export default function BoardPage() {
                                 <motion.span 
                                     animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 10, 0] }}
                                     transition={{ repeat: Infinity, duration: 1 }}
-                                    className="text-8xl md:text-9xl"
+                                    className="text-4xl md:text-6xl"
                                 >🔥</motion.span>
                             )}
                         </motion.div>
