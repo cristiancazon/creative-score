@@ -555,7 +555,7 @@ export default function BoardPage() {
                                             <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-0.5">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number ?? '??'}</span>
-                                                    <span className="truncate max-w-[120px]">{p.name ? p.name.split(' ')[0] : 'N/A'}</span>
+                                                    <span className="truncate max-w-[120px]">{p.name || 'N/A'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {(match.gamestate?.player_stats?.[p.id]?.fouls || 0) > 0 && (
@@ -591,7 +591,7 @@ export default function BoardPage() {
                                             <div key={p.id} className="flex justify-between items-center text-[0.8em] border-b border-current/20 pb-0.5">
                                                 <div className="flex items-center gap-2">
                                                     <span className="font-mono font-bold w-6 text-center bg-white/10 rounded">{p.number ?? '??'}</span>
-                                                    <span className="truncate max-w-[120px]">{p.name ? p.name.split(' ')[0] : 'N/A'}</span>
+                                                    <span className="truncate max-w-[120px]">{p.name || 'N/A'}</span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     {(match.gamestate?.player_stats?.[p.id]?.fouls || 0) > 0 && (
