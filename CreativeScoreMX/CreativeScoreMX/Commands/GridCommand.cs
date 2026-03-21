@@ -63,4 +63,32 @@ namespace Loupedeck.CreativeScoreMX.Commands
     public class Grid8Command : BaseScoreCommand { public Grid8Command() : base("mx_grid_8", "Grid 8", "MX Grid Actions") { } }
     public class TeamLocalCommand : BaseScoreCommand { public TeamLocalCommand() : base("mx_team_local", "Local Team", "MX Team Actions") { } }
     public class TeamVisitorCommand : BaseScoreCommand { public TeamVisitorCommand() : base("mx_team_visitor", "Visitor Team", "MX Team Actions") { } }
+    
+    public class AdTextCommand : BaseScoreCommand { 
+        public AdTextCommand() : base("mx_ad_text", "Text Ad", "MX Ad Actions") { } 
+        
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            using (var bitmapBuilder = new BitmapBuilder(imageSize))
+            {
+                bitmapBuilder.Clear(BitmapColor.Black);
+                bitmapBuilder.DrawText("TXT AD", BitmapColor.White);
+                return bitmapBuilder.ToImage();
+            }
+        }
+    }
+    
+    public class AdVideoCommand : BaseScoreCommand { 
+        public AdVideoCommand() : base("mx_ad_video", "Video Ad", "MX Ad Actions") { } 
+        
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            using (var bitmapBuilder = new BitmapBuilder(imageSize))
+            {
+                bitmapBuilder.Clear(BitmapColor.Black);
+                bitmapBuilder.DrawText("VID AD", BitmapColor.White);
+                return bitmapBuilder.ToImage();
+            }
+        }
+    }
 }

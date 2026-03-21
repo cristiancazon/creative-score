@@ -80,7 +80,9 @@ export default function ControlMXPage() {
                 'mx_grid_3': 3, 'mx_grid_4': 4, 'mx_grid_5': 5,
                 'mx_grid_6': 6, 'mx_grid_7': 7, 'mx_grid_8': 8,
                 'mx_team_local': 'home',
-                'mx_team_visitor': 'away'
+                'mx_team_visitor': 'away',
+                'mx_ad_text': 'ad_text',
+                'mx_ad_video': 'ad_video'
             };
 
             const mapped = actionMap[msg.actionId];
@@ -88,6 +90,10 @@ export default function ControlMXPage() {
                 handleGridAction(mapped);
             } else if (mapped === 'home' || mapped === 'away') {
                 setSelectedTeam(mapped);
+            } else if (mapped === 'ad_text') {
+                toggleTextAd();
+            } else if (mapped === 'ad_video') {
+                toggleVideoAd();
             }
         }
     }, [lastJsonMessage]);
@@ -326,20 +332,65 @@ export default function ControlMXPage() {
             const startedAt = new Date(match.timer_started_at!).getTime();
             const elapsed = Math.floor((now - startedAt) / 1000);
             const newRemaining = Math.max(0, match.timer_seconds - elapsed);
-            await directus.request(updateItem('matches', match.id, {
+
+            let newObj: any = {
                 status: 'paused',
                 timer_seconds: newRemaining,
                 timer_started_at: null
-            }));
-            setMatch(prev => ({ ...prev!, status: 'paused', timer_seconds: newRemaining, timer_started_at: null }));
+            };
+
+            let newGamestate = { ...gamestate };
+            if (newGamestate?.shot_clock?.started_at) {
+                 const scStartedAt = new Date(newGamestate.shot_clock.started_at).getTime();
+                 const scElapsed = Math.floor((now - scStartedAt) / 1000);
+                 const scRemaining = Math.max(0, newGamestate.shot_clock.seconds - scElapsed);
+                 newGamestate.shot_clock = {
+                     seconds: scRemaining,
+                     started_at: null
+                 };
+                 newObj.gamestate = newGamestate;
+            }
+
+            await directus.request(updateItem('matches', match.id, newObj));
+            setMatch(prev => ({ ...prev!, ...newObj }));
+
         } else {
-            const now = new Date().toISOString();
-            await directus.request(updateItem('matches', match.id, {
+            const nowIso = new Date().toISOString();
+
+            let newObj: any = {
                 status: 'live',
-                timer_started_at: now
-            }));
-            setMatch(prev => ({ ...prev!, status: 'live', timer_started_at: now }));
+                timer_started_at: nowIso
+            };
+
+            let newGamestate = { ...gamestate };
+            if (newGamestate?.shot_clock?.seconds !== undefined && !newGamestate?.shot_clock?.started_at) {
+                newGamestate.shot_clock = {
+                    ...newGamestate.shot_clock,
+                    started_at: nowIso
+                };
+                newObj.gamestate = newGamestate;
+            }
+
+            await directus.request(updateItem('matches', match.id, newObj));
+            setMatch(prev => ({ ...prev!, ...newObj }));
         }
+    };
+
+    const resetShotClock = async (seconds: 14 | 24) => {
+        if (!match) return;
+        const isLive = match.status === 'live';
+        const newShotClock = {
+            seconds: seconds,
+            started_at: isLive ? new Date().toISOString() : null
+        };
+        const newGamestate = {
+            ...match.gamestate,
+            shot_clock: newShotClock
+        };
+        await directus.request(updateItem('matches', match.id, {
+            gamestate: newGamestate
+        }));
+        setMatch(prev => ({ ...prev!, gamestate: newGamestate }));
     };
 
     const toggleTextAd = async () => {
@@ -603,9 +654,9 @@ export default function ControlMXPage() {
             } else if (index === 6) {
                 toggleTimer();
             } else if (index === 7) {
-                toggleTextAd();
+                resetShotClock(14);
             } else if (index === 8) {
-                toggleVideoAd();
+                resetShotClock(24);
             }
         } else if (view === 'actions') {
             // Mapping:
@@ -749,25 +800,17 @@ export default function ControlMXPage() {
                         <button
                             id="mx_btn_7"
                             onClick={() => handleGridAction(7)}
-                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${(!isRunning && (match as any).active_ad_text) ? 'bg-cyan-500/10 border-cyan-500/30 text-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.5)]' : 'bg-white/[0.02] border-white/5 hover:bg-white/5'}`}
+                            className="rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60"
                         >
-                            {(!isRunning && (match as any).active_ad_text) ? (
-                                <span className="text-xl font-black mb-1 text-center">TEXT<br/>ON</span>
-                            ) : (
-                                <span className="text-cyan-500/20 text-[10px] font-black italic">TEXT AD</span>
-                            )}
+                            <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">14</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">X</span>
                         </button>
                         <button
                             id="mx_btn_8"
                             onClick={() => handleGridAction(8)}
-                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${(!isRunning && (match as any).active_ad_video) ? 'bg-pink-500/10 border-pink-500/30 text-pink-500 shadow-[0_0_15px_rgba(236,72,153,0.5)]' : 'bg-white/[0.02] border-white/5 hover:bg-white/5'}`}
+                            className="rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60"
                         >
-                            {(!isRunning && (match as any).active_ad_video) ? (
-                                <span className="text-xl font-black mb-1 text-center">VIDEO<br/>ON</span>
-                            ) : (
-                                <span className="text-pink-500/20 text-[10px] font-black italic">VIDEO AD</span>
-                            )}
+                            <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">24</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">C</span>
                         </button>
                     </>

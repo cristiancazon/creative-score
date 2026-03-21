@@ -45,6 +45,8 @@ export default function BoardPage() {
         return String(idInput);
     };
 
+    const [shotClock, setShotClock] = useState<number | null>(null);
+
     // Sync local timer with match state
     useEffect(() => {
         if (!match) return;
@@ -58,9 +60,26 @@ export default function BoardPage() {
                 const elapsed = Math.floor((now - startedAt) / 1000);
                 // @ts-ignore
                 setLocalTimer(Math.max(0, match.timer_seconds - elapsed));
+                
+                // Shot Clock Live Sync
+                // @ts-ignore
+                if (match?.gamestate?.shot_clock?.started_at && match?.gamestate?.shot_clock?.seconds !== undefined) {
+                    // @ts-ignore
+                    const scStartedAt = new Date(match.gamestate.shot_clock.started_at).getTime();
+                    const scElapsed = Math.floor((now - scStartedAt) / 1000);
+                    // @ts-ignore
+                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds - scElapsed));
+                }
             } else {
                 // @ts-ignore
                 setLocalTimer(match.timer_seconds || 0);
+                // @ts-ignore
+                if (match?.gamestate?.shot_clock?.seconds !== undefined) {
+                    // @ts-ignore
+                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
+                } else {
+                    setShotClock(null);
+                }
             }
         };
 
@@ -456,6 +475,10 @@ export default function BoardPage() {
                         switch (el.type) {
                             case 'timer':
                                 content = formatTime(localTimer);
+                                if (match.status === 'paused') extraStyle = { opacity: 0.5 };
+                                break;
+                            case 'shot_clock':
+                                content = shotClock !== null ? shotClock : '';
                                 if (match.status === 'paused') extraStyle = { opacity: 0.5 };
                                 break;
                             case 'period':

@@ -248,24 +248,51 @@ export default function ControlPage() {
             const elapsed = Math.floor((now - startedAt) / 1000);
             const newRemaining = Math.max(0, match.timer_seconds - elapsed);
 
-            await directus.request(updateItem('matches', match.id, {
+            let newObj: any = {
                 status: 'paused',
                 timer_seconds: newRemaining,
                 timer_started_at: null
-            }));
+            };
 
-            setMatch(prev => ({ ...prev!, status: 'paused', timer_seconds: newRemaining, timer_started_at: null }));
+            let newGamestate = { ...gamestate };
+            if (newGamestate?.shot_clock?.started_at) {
+                 const scStartedAt = new Date(newGamestate.shot_clock.started_at).getTime();
+                 const scElapsed = Math.floor((now - scStartedAt) / 1000);
+                 const scRemaining = Math.max(0, newGamestate.shot_clock.seconds - scElapsed);
+                 newGamestate.shot_clock = {
+                     seconds: scRemaining,
+                     started_at: null
+                 };
+                 newObj.gamestate = newGamestate;
+            }
+
+            await directus.request(updateItem('matches', match.id, newObj));
+
+            // @ts-ignore
+            setMatch(prev => ({ ...prev!, ...newObj }));
 
         } else {
             // START: Current time becomes timer_started_at
-            const now = new Date().toISOString();
+            const nowIso = new Date().toISOString();
 
-            await directus.request(updateItem('matches', match.id, {
+            let newObj: any = {
                 status: 'live',
-                timer_started_at: now
-            }));
+                timer_started_at: nowIso
+            };
 
-            setMatch(prev => ({ ...prev!, status: 'live', timer_started_at: now }));
+            let newGamestate = { ...gamestate };
+            if (newGamestate?.shot_clock?.seconds !== undefined && !newGamestate?.shot_clock?.started_at) {
+                newGamestate.shot_clock = {
+                    ...newGamestate.shot_clock,
+                    started_at: nowIso
+                };
+                newObj.gamestate = newGamestate;
+            }
+
+            await directus.request(updateItem('matches', match.id, newObj));
+
+            // @ts-ignore
+            setMatch(prev => ({ ...prev!, ...newObj }));
         }
     };
 
@@ -279,6 +306,25 @@ export default function ControlPage() {
         }));
         setMatch(prev => ({ ...prev!, timer_seconds: seconds, status: 'paused', timer_started_at: null }));
     };
+
+    const resetShotClock = async (seconds: 14 | 24) => {
+        if (!match) return;
+        const isLive = match.status === 'live';
+        const newShotClock = {
+            seconds: seconds,
+            started_at: isLive ? new Date().toISOString() : null
+        };
+        const newGamestate = {
+            ...match.gamestate,
+            shot_clock: newShotClock
+        };
+        await directus.request(updateItem('matches', match.id, {
+            gamestate: newGamestate
+        }));
+        // @ts-ignore
+        setMatch(prev => ({ ...prev!, gamestate: newGamestate }));
+    };
+
 
     const resetMatchFull = async () => {
         if (!match) return;
@@ -646,6 +692,23 @@ export default function ControlPage() {
 
                 {/* Controls */}
                 <div className="flex items-center gap-6">
+                    <div className="flex flex-col items-center gap-2 mr-4">
+                        <button
+                            onClick={() => resetShotClock(24)}
+                            className="w-16 h-10 rounded-lg bg-red-900/40 hover:bg-red-600 text-red-500 hover:text-white border border-red-900 flex items-center justify-center transition-all font-black text-xl"
+                            title="Reset shot clock to 24s"
+                        >
+                            24
+                        </button>
+                        <button
+                            onClick={() => resetShotClock(14)}
+                            className="w-16 h-10 rounded-lg bg-red-900/40 hover:bg-red-600 text-red-500 hover:text-white border border-red-900 flex items-center justify-center transition-all font-black text-xl"
+                            title="Reset shot clock to 14s"
+                        >
+                            14
+                        </button>
+                    </div>
+                
                     <button
                         onClick={toggleTimer}
                         className={`w-20 h-20 rounded-full flex flex-col items-center justify-center transition-all shadow-lg text-white font-bold text-center leading-tight

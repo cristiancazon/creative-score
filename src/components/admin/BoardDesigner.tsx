@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 
 interface BoardElement {
     id: string;
-    type: 'timer' | 'period' | 'score_home' | 'score_away' | 'name_home' | 'name_away' | 'fouls_home' | 'fouls_away' | 'timeouts_home' | 'timeouts_away' | 'players_home' | 'players_away' | 'text' | 'box';
+    type: 'timer' | 'shot_clock' | 'period' | 'score_home' | 'score_away' | 'name_home' | 'name_away' | 'fouls_home' | 'fouls_away' | 'timeouts_home' | 'timeouts_away' | 'players_home' | 'players_away' | 'text' | 'box';
     x: number;
     y: number;
     width: number;
@@ -169,6 +169,7 @@ export default function BoardDesigner({ boardId }: BoardDesignerProps) {
     const renderPreviewContent = (el: BoardElement) => {
         switch (el.type) {
             case 'timer': return "12:00";
+            case 'shot_clock': return "24";
             case 'period': return "1";
             case 'score_home': return "88";
             case 'score_away': return "76";
@@ -214,6 +215,9 @@ export default function BoardDesigner({ boardId }: BoardDesignerProps) {
                 <div className="flex flex-col gap-2 px-4">
                     <button onClick={() => addElement('timer')} className="flex items-center gap-3 p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg hover:text-blue-400 transition text-sm font-medium text-gray-300 border border-transparent hover:border-gray-700">
                         <Monitor size={18} /> Timer
+                    </button>
+                    <button onClick={() => addElement('shot_clock')} className="flex items-center gap-3 p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg hover:text-red-400 transition text-sm font-medium text-gray-300 border border-transparent hover:border-red-900/30">
+                        <Monitor size={18} className="text-red-500" /> Shot Clock
                     </button>
                     <button onClick={() => addElement('period')} className="flex items-center gap-3 p-3 bg-gray-800/50 hover:bg-gray-800 rounded-lg hover:text-blue-400 transition text-sm font-medium text-gray-300 border border-transparent hover:border-gray-700">
                         <span className="font-mono text-xs border border-current px-1 rounded">1</span> Period
