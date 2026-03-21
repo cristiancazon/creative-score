@@ -347,7 +347,7 @@ export default function BoardPage() {
                         setRecentScore({ player, team, points: diff });
                         setTimeout(() => {
                             setRecentScore(null);
-                        }, 4000); // Hide after 4s
+                        }, 2000); // Hide after 2s
                     }
                 }
             }
@@ -390,7 +390,7 @@ export default function BoardPage() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                    className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
+                    className="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
                 >
                     <motion.div 
                         initial={{ y: 100, scale: 0.5, opacity: 0 }}
@@ -414,25 +414,28 @@ export default function BoardPage() {
                             initial={{ scale: 0, rotate: -20 }}
                             animate={{ scale: 1, rotate: 0 }}
                             transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
-                            className="text-[12rem] md:text-[22rem] font-black italic leading-none"
+                            className="text-[12rem] md:text-[22rem] font-black italic leading-none flex items-center justify-center gap-6"
                             style={{ 
                                 color: recentScore.team.primary_color || '#fff',
                                 textShadow: '0 20px 50px rgba(0,0,0,0.5)'
                             }}
                         >
-                            +{recentScore.points}
+                            {recentScore.points === 3 && (
+                                <motion.span 
+                                    animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
+                                    transition={{ repeat: Infinity, duration: 1 }}
+                                    className="text-8xl md:text-9xl"
+                                >🔥</motion.span>
+                            )}
+                            <span>+{recentScore.points}</span>
+                            {recentScore.points === 3 && (
+                                <motion.span 
+                                    animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 10, 0] }}
+                                    transition={{ repeat: Infinity, duration: 1 }}
+                                    className="text-8xl md:text-9xl"
+                                >🔥</motion.span>
+                            )}
                         </motion.div>
-
-                        {recentScore.points === 3 && (
-                            <motion.div
-                                animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
-                                transition={{ repeat: Infinity, duration: 1 }}
-                                className="mt-12 text-5xl md:text-7xl font-bold italic text-orange-500 tracking-wider"
-                                style={{ textShadow: '0 0 30px rgba(249, 115, 22, 0.6)' }}
-                            >
-                                🔥 THREE POINTER 🔥
-                            </motion.div>
-                        )}
                     </motion.div>
                 </motion.div>
             )}
@@ -627,6 +630,8 @@ export default function BoardPage() {
                             </div>
                         );
                     })}
+
+                    {scoreOverlay}
                 </div>
 
                 {/* Text Ad Overlay */}
@@ -668,8 +673,6 @@ export default function BoardPage() {
                         </motion.div>
                     )}
                 </AnimatePresence>
-
-                {scoreOverlay}
             </div>
         );
     }
