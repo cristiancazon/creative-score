@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Creative Score | Unify Your Sports Ecosystem</title>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "surface-container": "#0f1930",
+              "secondary-fixed-dim": "#7ee5e4",
+              "tertiary-container": "#72eff5",
+              "inverse-primary": "#006a70",
+              "surface-bright": "#1f2b49",
+              "on-primary": "#005f64",
+              "surface-variant": "#192540",
+              "outline-variant": "#40485d",
+              "primary-container": "#00f1fe",
+              "on-secondary-fixed": "#004747",
+              "secondary-dim": "#7ee5e4",
+              "on-tertiary-fixed-variant": "#006266",
+              "on-secondary": "#005c5c",
+              "error-container": "#9f0519",
+              "on-background": "#dee5ff",
+              "surface-container-high": "#141f38",
+              "surface-container-lowest": "#000000",
+              "primary-fixed-dim": "#00e2ee",
+              "on-tertiary-fixed": "#004346",
+              "on-primary-container": "#00555a",
+              "surface": "#060e20",
+              "secondary-fixed": "#8cf3f3",
+              "tertiary": "#9dfaff",
+              "on-surface": "#dee5ff",
+              "on-secondary-container": "#d9fffe",
+              "surface-container-highest": "#192540",
+              "secondary": "#8cf3f3",
+              "on-error-container": "#ffa8a3",
+              "tertiary-fixed": "#72eff5",
+              "tertiary-fixed-dim": "#63e1e7",
+              "secondary-container": "#006a6a",
+              "on-surface-variant": "#a3aac4",
+              "inverse-surface": "#faf8ff",
+              "primary-fixed": "#00f1fe",
+              "error-dim": "#d7383b",
+              "on-error": "#490006",
+              "surface-dim": "#060e20",
+              "on-primary-fixed": "#004145",
+              "tertiary-dim": "#63e1e7",
+              "background": "#060e20",
+              "on-secondary-fixed-variant": "#006666",
+              "primary-dim": "#00e2ee",
+              "on-primary-fixed-variant": "#006065",
+              "surface-tint": "#99f7ff",
+              "outline": "#6d758c",
+              "on-tertiary-container": "#00585b",
+              "surface-container-low": "#091328",
+              "error": "#ff716c",
+              "inverse-on-surface": "#4d556b",
+              "on-tertiary": "#006164",
+              "primary": "#99f7ff"
+            },
+            fontFamily: {
+              "headline": ["Lexend"],
+              "body": ["Inter"],
+              "label": ["Inter"]
+            },
+            borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1.5rem", "full": "9999px"},
+          },
+        },
+      }
+    </script>
+<style>
+      body {
+        background-color: #060e20;
+        color: #dee5ff;
+        font-family: 'Inter', sans-serif;
+      }
+      .glass-card {
+        background: rgba(25, 37, 64, 0.6);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(64, 72, 93, 0.2);
+      }
+      .hero-gradient-text {
+        background: linear-gradient(135deg, #99f7ff 0%, #00f1fe 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .ambient-glow {
+        box-shadow: 0 20px 40px rgba(0, 241, 254, 0.08);
+      }
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+    </style>
+</head>
+<body class="bg-surface selection:bg-primary/30 selection:text-primary">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-transparent backdrop-blur-xl">
+<div class="flex justify-between items-center max-w-7xl mx-auto px-8 py-6">
+<div class="text-2xl font-bold tracking-tighter text-cyan-400 dark:text-cyan-400 font-headline">
+                Creative Score
+            </div>
+<div class="hidden md:flex items-center space-x-10">
+<a class="text-cyan-400 font-semibold border-b-2 border-cyan-400 pb-1 transition-all duration-300 font-label" href="#">Features</a>
+<a class="text-slate-300 dark:text-slate-300 hover:text-cyan-200 transition-colors font-label" href="#">Pricing</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-slate-300 hover:text-cyan-300 transition-all duration-300 font-label font-medium px-4 py-2 rounded-xl hover:bg-cyan-400/10 scale-95 active:scale-100">
+                    Login
+                </button>
+<button class="bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed px-8 py-3 rounded-2xl font-headline font-bold text-sm tracking-wide shadow-lg hover:shadow-primary/20 hover:scale-105 active:scale-100 transition-all duration-300">
+                    Get Started
+                </button>
+</div>
+</div>
+</nav>
+<main class="relative overflow-hidden pt-32">
+<!-- Background Decorative Glows -->
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 blur-[120px] rounded-full -z-10"></div>
+<div class="absolute bottom-[20%] right-[-5%] w-[40%] h-[40%] bg-secondary-container/10 blur-[100px] rounded-full -z-10"></div>
+<!-- Hero Section -->
+<section class="max-w-7xl mx-auto px-8 text-center relative">
+<div class="max-w-4xl mx-auto space-y-8">
+<h1 class="font-headline text-6xl md:text-8xl font-extrabold tracking-tight leading-[1.1] text-on-surface">
+                    Unify Your <span class="hero-gradient-text">Sports Ecosystem</span>
+</h1>
+<p class="font-body text-xl text-on-surface-variant leading-relaxed max-w-2xl mx-auto">
+                    Total control over matches, live scores, and scoreboard displays synced directly with your stream controllers.
+                </p>
+<div class="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4">
+<button class="bg-gradient-to-r from-primary to-primary-container text-on-primary-fixed px-10 py-5 rounded-2xl font-headline font-bold text-lg shadow-xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300">
+                        Start Free Trial
+                    </button>
+<button class="glass-card text-on-surface border border-outline-variant/30 px-10 py-5 rounded-2xl font-headline font-bold text-lg hover:bg-surface-variant transition-all duration-300">
+                        Book a Demo
+                    </button>
+</div>
+</div>
+<!-- Dashboard Preview (Asymmetric Floating Grid) -->
+<div class="mt-24 relative max-w-6xl mx-auto">
+<div class="relative z-10 glass-card rounded-2xl p-4 md:p-8 ambient-glow transform rotate-1 hover:rotate-0 transition-transform duration-700">
+<div class="grid grid-cols-12 gap-6 h-[500px]">
+<!-- Sidebar Mockup -->
+<div class="col-span-3 space-y-4">
+<div class="h-12 w-full bg-surface-container-lowest rounded-xl flex items-center px-4 gap-3">
+<span class="material-symbols-outlined text-primary text-sm">dashboard</span>
+<div class="h-2 w-24 bg-outline-variant/40 rounded-full"></div>
+</div>
+<div class="space-y-2 pt-4">
+<div class="h-10 w-full bg-primary/10 border-l-2 border-primary rounded-r-lg flex items-center px-4">
+<div class="h-2 w-20 bg-primary/60 rounded-full"></div>
+</div>
+<div class="h-10 w-full bg-transparent rounded-lg flex items-center px-4">
+<div class="h-2 w-16 bg-outline-variant/40 rounded-full"></div>
+</div>
+<div class="h-10 w-full bg-transparent rounded-lg flex items-center px-4">
+<div class="h-2 w-18 bg-outline-variant/40 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Main Panel Mockup -->
+<div class="col-span-9 space-y-6">
+<div class="flex justify-between items-center">
+<div class="h-8 w-48 bg-surface-container-lowest rounded-lg"></div>
+<div class="flex gap-2">
+<div class="h-8 w-8 bg-surface-container-high rounded-full"></div>
+<div class="h-8 w-8 bg-surface-container-high rounded-full"></div>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-6">
+<div class="col-span-2 h-64 bg-surface-container-lowest rounded-2xl p-6 relative overflow-hidden group">
+<div class="absolute top-4 right-4 h-3 w-3 bg-error rounded-full animate-pulse"></div>
+<div class="space-y-4">
+<div class="h-4 w-32 bg-outline-variant/40 rounded-full"></div>
+<div class="flex items-center gap-8 py-8">
+<div class="text-4xl font-headline font-bold text-on-surface">43</div>
+<div class="h-px flex-1 bg-outline-variant/20"></div>
+<div class="text-4xl font-headline font-bold text-primary">28</div>
+</div>
+<div class="h-2 w-full bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[65%]"></div>
+</div>
+</div>
+<img class="absolute inset-0 opacity-10 object-cover -z-10 group-hover:scale-110 transition-transform duration-1000" data-alt="Dark futuristic sports analytics dashboard background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuASONuEH60RRLU62KAMA_oKLohYuEdIosNa9XIWRYXynbH8gN1pOMtASnTvj64v3zF9ohSTRky9GjE1UW_JV5ygmIggRFLAu0pz_H4mSStywfpmIWAJ_Uf09OiI9DaI897F-o2GBS6C4N6MhapG4edayI95wioJyVOpsJOF4nMQHtG09ecFI6AVvVhG_l_eoj_brJ-Z57XZauBDprh2IQG2V9Gv9ACcV4NXlAe9bo-jtOcsJ2JlLmtTY9Igay4kCMy-7OzBOJ2VtQAd"/>
+</div>
+<div class="h-64 bg-surface-variant/40 border border-outline-variant/20 rounded-2xl flex flex-col items-center justify-center gap-4">
+<span class="material-symbols-outlined text-secondary text-4xl" data-weight="fill">settings_input_component</span>
+<div class="h-2 w-20 bg-secondary/40 rounded-full"></div>
+</div>
+</div>
+<div class="h-32 bg-surface-container-low rounded-2xl p-6 flex items-center gap-6">
+<div class="h-12 w-12 rounded-full bg-tertiary/20 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary">podcasts</span>
+</div>
+<div class="space-y-2 flex-1">
+<div class="h-2 w-1/3 bg-on-surface-variant/30 rounded-full"></div>
+<div class="h-3 w-2/3 bg-on-surface-variant/50 rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Float elements -->
+<div class="absolute -top-12 -right-8 glass-card p-6 rounded-2xl ambient-glow hidden lg:block max-w-[200px] transform -rotate-6">
+<span class="material-symbols-outlined text-cyan-400 mb-3">bolt</span>
+<p class="font-label text-xs text-on-surface-variant uppercase tracking-widest font-bold">Latency</p>
+<p class="font-headline text-2xl font-bold text-on-surface">0.02ms</p>
+</div>
+</div>
+</section>
+<!-- Features Section Grid -->
+<section class="max-w-7xl mx-auto px-8 py-32 relative">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<!-- Card 1 -->
+<div class="bg-surface-container-low p-10 rounded-2xl group hover:bg-surface-container-high transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-8xl">settings_input_hdmi</span>
+</div>
+<div class="relative z-10 space-y-6">
+<div class="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-3xl">settings_input_hdmi</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface">Hardware Sync Controllers</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                            Experience zero-latency integration with dynamic overlay plugin grids for real-time tracking across your entire broadcast stack.
+                        </p>
+<a class="inline-flex items-center gap-2 text-primary font-label font-semibold group-hover:gap-4 transition-all" href="#">
+                            Explore Connectivity <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="bg-surface-container-low p-10 rounded-2xl group hover:bg-surface-container-high transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-8xl">grid_view</span>
+</div>
+<div class="relative z-10 space-y-6">
+<div class="w-14 h-14 rounded-xl bg-secondary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-secondary text-3xl">grid_view</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface">Workspaces modular views</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                            Take control with customizable layouts. Manage Teams, Players, and schedules from clean, responsive panels designed for speed.
+                        </p>
+<a class="inline-flex items-center gap-2 text-secondary font-label font-semibold group-hover:gap-4 transition-all" href="#">
+                            Configure UI <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="bg-surface-container-low p-10 rounded-2xl group hover:bg-surface-container-high transition-all duration-500 relative overflow-hidden">
+<div class="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+<span class="material-symbols-outlined text-8xl">campaign</span>
+</div>
+<div class="relative z-10 space-y-6">
+<div class="w-14 h-14 rounded-xl bg-tertiary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-tertiary text-3xl">campaign</span>
+</div>
+<h3 class="font-headline text-2xl font-bold text-on-surface">Ads deployment media setups</h3>
+<p class="font-body text-on-surface-variant leading-relaxed">
+                            Automate your revenue. Push overlays and sponsorship presets with precision threshold metrics and performance tracking.
+                        </p>
+<a class="inline-flex items-center gap-2 text-tertiary font-label font-semibold group-hover:gap-4 transition-all" href="#">
+                            View Monetization <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="bg-slate-950 dark:bg-black w-full border-t border-slate-800/20">
+<div class="flex flex-col md:flex-row justify-between items-center max-w-7xl mx-auto px-8 py-12">
+<div class="flex flex-col items-center md:items-start gap-2 mb-8 md:mb-0">
+<div class="text-lg font-bold text-slate-200 font-headline">Creative Score</div>
+<p class="text-slate-500 font-label text-sm">© 2024 Creative Score. Kinetic Curator System.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="text-slate-500 hover:text-slate-300 font-label text-sm transition-all hover:underline" href="#">Terms</a>
+<a class="text-slate-500 hover:text-slate-300 font-label text-sm transition-all hover:underline" href="#">Privacy</a>
+<a class="text-slate-500 hover:text-slate-300 font-label text-sm transition-all hover:underline" href="#">Twitter</a>
+<a class="text-slate-500 hover:text-slate-300 font-label text-sm transition-all hover:underline" href="#">Support</a>
+</div>
+</div>
+</footer>
+</body></html>

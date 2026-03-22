@@ -296,6 +296,9 @@ export default function LandingPage() {
         .glass-blue { background: rgba(37,99,235,0.12); backdrop-filter: blur(16px); border: 1px solid rgba(37,99,235,0.25); }
         .text-gradient { background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #34d399 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
         .glow { box-shadow: 0 0 60px rgba(37,99,235,0.35); }
+        .hero-gradient-text { background: linear-gradient(135deg, #99f7ff 0%, #00f1fe 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .glass-card { background: rgba(25, 37, 64, 0.6); backdrop-filter: blur(20px); border: 1px solid rgba(64, 72, 93, 0.2); }
+        .ambient-glow { box-shadow: 0 20px 40px rgba(0, 241, 254, 0.08); }
         .hero-bg { background: linear-gradient(180deg, rgba(5,10,21,0) 0%, rgba(5,10,21,0.6) 50%, #050a15 100%); }
         .card-hover { transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease; }
         .card-hover:hover { transform: translateY(-6px); border-color: rgba(96,165,250,0.4); box-shadow: 0 20px 60px rgba(37,99,235,0.2); }
@@ -330,9 +333,15 @@ export default function LandingPage() {
             >
               {lang === 'en' ? 'ES' : 'EN'}
             </button>
+            <button 
+              onClick={() => window.location.href = '/login'}
+              className="text-slate-300 hover:text-cyan-300 transition-all font-medium px-4 py-2 rounded-xl hover:bg-cyan-400/10 scale-95 active:scale-100 hidden sm:block"
+            >
+              Login
+            </button>
             <a
               href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2 rounded-full transition-all glow hidden sm:block"
+              className="bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-all glow hidden sm:block"
             >
               {t.nav.demo}
             </a>
@@ -341,81 +350,138 @@ export default function LandingPage() {
       </nav>
 
       {/* ── Hero ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Background image */}
-        <div className="absolute inset-0">
-          <Image
-            src="/img_web/boards.jpg"
-            alt="Creative Score Board"
-            fill
-            className="object-cover opacity-30"
-            priority
-          />
-          <div className="hero-bg absolute inset-0" />
-          {/* Radial glow */}
-          <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 40%, rgba(37,99,235,0.18) 0%, transparent 70%)' }} />
-        </div>
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-32">
+        {/* Background Decorative Glows */}
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-cyan-400/10 blur-[120px] rounded-full -z-10"></div>
+        <div className="absolute bottom-[20%] right-[-5%] w-[40%] h-[40%] bg-blue-600/10 blur-[100px] rounded-full -z-10"></div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 pt-28 pb-20 text-center">
-          <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <span className="glass-blue inline-block text-blue-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
-              {t.hero.badge}
-            </span>
-          </motion.div>
+        <div className="relative z-10 max-w-7xl mx-auto px-8 text-center relative">
+          <div className="max-w-4xl mx-auto space-y-8">
+            <motion.div variants={fadeUp} initial="hidden" animate="visible">
+              <span className="glass-blue inline-block text-cyan-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
+                {t.hero.badge}
+              </span>
+            </motion.div>
 
-          <motion.h1
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{ transitionDelay: '0.1s' }}
-            className="text-5xl sm:text-7xl font-black tracking-tight leading-tight mb-6"
-          >
-            {t.hero.title}{' '}
-            <span className="text-gradient">{t.hero.titleAccent}</span>
-          </motion.h1>
-
-          <motion.p
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{ transitionDelay: '0.2s' }}
-            className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed"
-          >
-            {t.hero.subtitle}
-          </motion.p>
-
-          <motion.div
-            variants={fadeUp}
-            initial="hidden"
-            animate="visible"
-            style={{ transitionDelay: '0.3s' }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-4"
-          >
-            <a
-              href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-full text-base transition-all glow hover:scale-105 active:scale-95"
+            <motion.h1
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              style={{ transitionDelay: '0.1s' }}
+              className="font-headline text-5xl md:text-8xl font-extrabold tracking-tight leading-[1.1] text-white"
             >
-              {t.hero.cta}
-            </a>
-            <button
-              onClick={() => scrollTo('features')}
-              className="glass text-white font-semibold px-8 py-4 rounded-full text-base hover:bg-white/10 transition-all"
+              {t.hero.title} <span className="hero-gradient-text">{t.hero.titleAccent}</span>
+            </motion.h1>
+
+            <motion.p
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              style={{ transitionDelay: '0.2s' }}
+              className="font-body text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed"
             >
-              {t.hero.ctaSecondary} →
-            </button>
+              {t.hero.subtitle}
+            </motion.p>
+
+            <motion.div
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              style={{ transitionDelay: '0.3s' }}
+              className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4"
+            >
+              <a
+                href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
+                className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl hover:shadow-cyan-400/30 hover:scale-105 transition-all duration-300"
+              >
+                {t.hero.cta}
+              </a>
+              <button
+                onClick={() => scrollTo('features')}
+                className="glass-card text-white border border-white/10 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-slate-800/40 transition-all duration-300"
+              >
+                {t.hero.ctaSecondary} →
+              </button>
+            </motion.div>
+          </div>
+
+          {/* Dashboard Preview (Asymmetric Floating Grid) */}
+          <motion.div 
+            variants={fadeUp}
+            initial="hidden"
+            animate="visible"
+            style={{ transitionDelay: '0.4s' }}
+            className="mt-24 relative max-w-6xl mx-auto"
+          >
+            <div className="relative z-10 glass-card rounded-2xl p-4 md:p-8 ambient-glow transform rotate-1 hover:rotate-0 transition-transform duration-700">
+              <div className="grid grid-cols-12 gap-6 h-[400px]">
+                {/* Sidebar Mockup */}
+                <div className="col-span-3 space-y-4 border-r border-white/5 pr-4">
+                  <div className="h-12 w-full bg-slate-950 rounded-xl flex items-center px-4 gap-3">
+                    <span className="w-2 h-2 rounded-full bg-cyan-400"></span>
+                    <div className="h-2 w-24 bg-slate-700 rounded-full"></div>
+                  </div>
+                  <div className="space-y-2 pt-4">
+                    <div className="h-10 w-full bg-cyan-400/10 border-l-2 border-cyan-400 rounded-r-lg flex items-center px-4">
+                      <div className="h-2 w-20 bg-cyan-400/60 rounded-full"></div>
+                    </div>
+                    {[1, 2, 3].map((item) => (
+                      <div key={item} className="h-10 w-full bg-transparent rounded-lg flex items-center px-4">
+                        <div className="h-2 w-16 bg-slate-800 rounded-full"></div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Main Panel Mockup */}
+                <div className="col-span-9 space-y-6">
+                  <div className="flex justify-between items-center">
+                    <div className="h-8 w-48 bg-slate-950 rounded-lg"></div>
+                    <div className="flex gap-2">
+                      <div className="h-8 w-8 bg-slate-800 rounded-full"></div>
+                      <div className="h-8 w-8 bg-slate-800 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6">
+                    <div className="col-span-2 h-56 bg-slate-950 rounded-2xl p-6 relative overflow-hidden group">
+                      <div className="absolute top-4 right-4 h-3 w-3 bg-red-500 rounded-full animate-pulse"></div>
+                      <div className="space-y-4">
+                        <div className="h-4 w-32 bg-slate-800 rounded-full"></div>
+                        <div className="flex items-center gap-8 py-6">
+                          <div className="text-4xl font-bold text-white">43</div>
+                          <div className="h-px flex-1 bg-white/10"></div>
+                          <div className="text-4xl font-bold text-cyan-400">28</div>
+                        </div>
+                        <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-cyan-400 w-[65%] shadow-[0_0_10px_#22d3ee]"></div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="h-56 bg-slate-900/40 border border-white/5 rounded-2xl flex flex-col items-center justify-center gap-4">
+                      <div className="w-12 h-12 rounded-full bg-cyan-400/10 flex items-center justify-center text-cyan-400 text-xl">⚡</div>
+                      <div className="h-2 w-20 bg-cyan-400/40 rounded-full"></div>
+                    </div>
+                  </div>
+                  <div className="h-24 bg-slate-900 rounded-2xl p-6 flex items-center gap-6">
+                    <div className="h-12 w-12 rounded-full bg-cyan-400/20 flex items-center justify-center text-cyan-400">
+                      📊
+                    </div>
+                    <div className="space-y-2 flex-1">
+                      <div className="h-2 w-1/3 bg-slate-700 rounded-full"></div>
+                      <div className="h-3 w-2/3 bg-slate-800 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            {/* Float elements */}
+            <div className="absolute -top-12 -right-8 glass-card p-6 rounded-2xl ambient-glow hidden lg:block max-w-[200px] transform rotate-6 border border-white/10">
+              <span className="text-cyan-400 mb-2 block text-2xl">⚡</span>
+              <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">Latency</p>
+              <p className="text-2xl font-bold text-white">0.02ms</p>
+            </div>
           </motion.div>
         </div>
-
-        {/* Scroll indicator */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-8 left-1/2 -translate-x-1/2 text-gray-600"
-        >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 5v14M5 12l7 7 7-7" />
-          </svg>
-        </motion.div>
       </section>
 
       {/* ── Stats Bar ── */}
