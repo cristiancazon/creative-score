@@ -1,0 +1,15 @@
+/* Custom Glassmorphism and Active navigation designs for Stitch Admin Theme */
+
+.glass-card {
+    background: rgba(25, 37, 64, 0.6) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(64, 72, 93, 0.2) !important;
+}
+
+.active-nav-glow {
+    box-shadow: 0 0 20px rgba(0, 241, 254, 0.15) !important;
+}
+
+body.admin-page {
+    background-color: #060e20 !important;
+}

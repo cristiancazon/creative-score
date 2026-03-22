@@ -2,10 +2,15 @@
 
 import { useEffect, useState } from 'react';
 import { directus } from '@/lib/directus';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { readMe } from '@directus/sdk';
 import Link from 'next/link';
 import { LayoutDashboard, Users, Trophy, Flag, LogOut, Swords, ChevronLeft, ChevronRight, Moon, Sun, Monitor, MessageSquare, Video, Download } from 'lucide-react';
+import { Lexend } from 'next/font/google';
+import './admin.css';
+
+
+const lexend = Lexend({ subsets: ['latin'] });
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const [authorized, setAuthorized] = useState(false);
@@ -17,8 +22,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         // Initialize theme
         if (typeof window !== 'undefined') {
             document.documentElement.classList.add('dark');
+            document.body.classList.add('admin-page');
         }
+        return () => {
+            if (typeof window !== 'undefined') {
+                document.body.classList.remove('admin-page');
+            }
+        };
     }, []);
+
 
     const toggleTheme = () => {
         setDarkMode(!darkMode);
@@ -75,16 +87,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     return (
-        <div className={`flex min-h-screen bg-[var(--background)] text-[var(--foreground)] transition-colors duration-300`}>
+        <div className={`${lexend.className} flex min-h-screen bg-[#060e20] text-slate-100 transition-colors duration-300`}>
             {/* Sidebar */}
             <aside
-                className={`${sidebarOpen ? 'w-64' : 'w-20'} border-r border-gray-800 bg-gray-900/50 backdrop-blur-xl flex flex-col fixed inset-y-0 z-20 transition-all duration-300`}
+                className={`${sidebarOpen ? 'w-64' : 'w-20'} border-r border-slate-800/20 bg-slate-950/60 backdrop-blur-xl flex flex-col fixed inset-y-0 z-20 transition-all duration-300`}
             >
                 <div className="p-6 border-b border-gray-800 flex items-center justify-between">
                     {sidebarOpen && (
                         <div>
-                            <h1 className="text-xl font-bold font-sans tracking-tight">Creative Score</h1>
-                            <p className="text-xs text-gray-500">Admin Panel</p>
+                            <h1 className="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">Creative Score</h1>
+                            <p className="text-xs text-slate-500 font-medium">Admin Panel</p>
                         </div>
                     )}
                     <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-1 hover:bg-gray-800 rounded text-gray-400">
@@ -118,15 +130,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     </a>
                 </nav>
 
-                <div className="p-4 border-t border-gray-800 space-y-2">
+                <div className="p-4 border-t border-cyan-500/10 space-y-2">
                     <button
                         onClick={toggleTheme}
                         className={`flex items-center gap-3 px-4 py-3 w-full rounded-lg hover:bg-gray-800 text-gray-400 transition-colors ${!sidebarOpen ? 'justify-center' : ''}`}
                         title="Toggle Theme"
                     >
                         {darkMode ? <Sun size={20} /> : <Moon size={20} />}
-                        {sidebarOpen && <span>{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
+                        {sidebarOpen && <span className="text-sm font-label uppercase tracking-wider">{darkMode ? 'Light Mode' : 'Dark Mode'}</span>}
                     </button>
+
 
                     <button
                         onClick={handleLogout}
@@ -134,8 +147,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                         title="Sign Out"
                     >
                         <LogOut size={20} />
-                        {sidebarOpen && <span>Sign Out</span>}
+                        {sidebarOpen && <span className="text-sm font-label uppercase tracking-wider">Sign Out</span>}
                     </button>
+
                 </div>
             </aside>
 
@@ -148,10 +162,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 }
 
 function NavItem({ href, icon, label, isOpen }: { href: string, icon: React.ReactNode, label: string, isOpen: boolean }) {
+    const pathname = usePathname();
+    const isActive = pathname === href;
+
     return (
-        <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 text-gray-300 hover:text-white transition-colors ${!isOpen ? 'justify-center' : ''}`} title={label}>
-            {icon}
-            {isOpen && <span className="whitespace-nowrap">{label}</span>}
+        <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-cyan-400/10 text-cyan-400 border-r-2 border-cyan-400 active-nav-glow font-bold' : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-100'} ${!isOpen ? 'justify-center' : ''}`} title={label}>
+            <span className={`${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>{icon}</span>
+            {isOpen && <span className="whitespace-nowrap font-label uppercase tracking-wider text-sm">{label}</span>}
         </Link>
     );
 }

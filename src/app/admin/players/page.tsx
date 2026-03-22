@@ -30,51 +30,51 @@ export default function PlayersList() {
     };
 
     return (
-        <div>
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-3xl font-bold text-white">Players</h1>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-3xl font-extrabold text-white tracking-tight">Players</h1>
                 <Link
                     href="/admin/players/new"
-                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors font-medium"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-400 hover:to-blue-400 text-white px-4 py-2 rounded-xl flex items-center gap-2 transition-all duration-300 font-semibold shadow-[0_0_20px_rgba(0,206,209,0.1)] hover:shadow-[0_0_25px_rgba(0,206,209,0.2)]"
                 >
                     <Plus size={18} />
                     Add Player
                 </Link>
             </div>
 
-            <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+            <div className="rounded-2xl bg-[#0c1629]/40 backdrop-blur-xl border border-cyan-500/10 shadow-[0_10px_40px_rgba(0,0,0,0.3)] overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left text-gray-400">
-                        <thead className="bg-gray-950 text-gray-400 uppercase text-xs">
+                    <table className="w-full text-left text-slate-300">
+                        <thead className="bg-[#0e1726]/60 border-b border-cyan-500/10 text-slate-400 uppercase text-xs tracking-wider">
                             <tr>
-                                <th className="px-6 py-4 font-semibold tracking-wider">Player</th>
-                                <th className="px-6 py-4 font-semibold tracking-wider">Number</th>
-                                <th className="px-6 py-4 font-semibold tracking-wider">Team</th>
-                                <th className="px-6 py-4 font-semibold tracking-wider text-right">Actions</th>
+                                <th className="px-6 py-4 font-bold">Player</th>
+                                <th className="px-6 py-4 font-bold">Number</th>
+                                <th className="px-6 py-4 font-bold">Team</th>
+                                <th className="px-6 py-4 font-bold text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-800">
+                        <tbody className="divide-y divide-cyan-500/5">
                             {loading ? (
-                                <tr><td colSpan={4} className="px-6 py-8 text-center">Loading...</td></tr>
+                                <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">Loading...</td></tr>
                             ) : players.length === 0 ? (
-                                <tr><td colSpan={4} className="px-6 py-8 text-center">No players found.</td></tr>
+                                <tr><td colSpan={4} className="px-6 py-12 text-center text-slate-400">No players found.</td></tr>
                             ) : (
                                 players.map((player) => (
-                                    <tr key={player.id} className="hover:bg-gray-800/50 transition-colors">
-                                        <td className="px-6 py-4 text-white font-medium flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center">
-                                                <User size={16} />
+                                    <tr key={player.id} className="hover:bg-slate-800/30 transition-colors">
+                                        <td className="px-6 py-4 text-white font-semibold flex items-center gap-3">
+                                            <div className="w-8 h-8 bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 rounded-full border border-cyan-500/20 flex items-center justify-center shadow-[0_0_10px_rgba(0,206,209,0.1)]">
+                                                <User size={14} className="text-cyan-400" />
                                             </div>
                                             {player.name}
                                         </td>
-                                        <td className="px-6 py-4 font-mono">{player.number}</td>
-                                        <td className="px-6 py-4">
+                                        <td className="px-6 py-4 font-mono text-cyan-400 font-bold">{player.number}</td>
+                                        <td className="px-6 py-4 text-slate-400 font-medium">
                                             {typeof player.team === 'object' && player.team ? (player.team as Team).name : '-'}
                                         </td>
-                                        <td className="px-6 py-4 flex justify-end gap-3">
+                                        <td className="px-6 py-4 flex justify-end gap-2">
                                             <Link
                                                 href={`/admin/players/${player.id}`}
-                                                className="p-2 hover:bg-gray-800 rounded-lg text-blue-400 transition-colors"
+                                                className="p-2 hover:bg-cyan-500/10 rounded-xl text-cyan-400 hover:text-cyan-300 transition-all duration-200 hover:shadow-[0_0_10px_rgba(6,182,212,0.2)]"
                                             >
                                                 <Edit size={18} />
                                             </Link>
