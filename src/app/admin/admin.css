@@ -1,15 +1,32 @@
-/* Custom Glassmorphism and Active navigation designs for Stitch Admin Theme */
+/* Custom Glassmorphism and Active navigation designs with Light/Dark Theme variables support */
+
+:root {
+    --admin-bg: #f8fafc;
+    --admin-text: #1e293b;
+    --admin-glass: rgba(255, 255, 255, 0.75);
+    --admin-glass-border: rgba(203, 213, 225, 0.4); /* slate-300 */
+    --admin-glass-hover: rgba(241, 245, 249, 0.6);
+}
+
+.dark {
+    --admin-bg: #060e20;
+    --admin-text: #dee5ff;
+    --admin-glass: rgba(25, 37, 64, 0.6);
+    --admin-glass-border: rgba(64, 72, 93, 0.2);
+    --admin-glass-hover: rgba(25, 37, 64, 0.4);
+}
+
+body.admin-page {
+    background-color: var(--admin-bg) !important;
+    color: var(--admin-text) !important;
+}
 
 .glass-card {
-    background: rgba(25, 37, 64, 0.6) !important;
+    background: var(--admin-glass) !important;
     backdrop-filter: blur(20px) !important;
-    border: 1px solid rgba(64, 72, 93, 0.2) !important;
+    border: 1px solid var(--admin-glass-border) !important;
 }
 
 .active-nav-glow {
     box-shadow: 0 0 20px rgba(0, 241, 254, 0.15) !important;
-}
-
-body.admin-page {
-    background-color: #060e20 !important;
 }

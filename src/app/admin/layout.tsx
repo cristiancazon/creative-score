@@ -87,10 +87,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     return (
-        <div className={`${lexend.className} flex min-h-screen bg-[#060e20] text-slate-100 transition-colors duration-300`}>
+        <div className={`${lexend.className} flex min-h-screen bg-slate-50 dark:bg-[#060e20] text-slate-800 dark:text-slate-100 transition-colors duration-300`}>
             {/* Sidebar */}
             <aside
-                className={`${sidebarOpen ? 'w-64' : 'w-20'} border-r border-slate-800/20 bg-slate-950/60 backdrop-blur-xl flex flex-col fixed inset-y-0 z-20 transition-all duration-300`}
+                className={`${sidebarOpen ? 'w-64' : 'w-20'} border-r border-slate-200 dark:border-slate-800/20 bg-white/75 dark:bg-slate-950/60 backdrop-blur-xl flex flex-col fixed inset-y-0 z-20 transition-all duration-300`}
             >
                 <div className="p-6 border-b border-gray-800 flex items-center justify-between">
                     {sidebarOpen && (
@@ -166,8 +166,8 @@ function NavItem({ href, icon, label, isOpen }: { href: string, icon: React.Reac
     const isActive = pathname === href;
 
     return (
-        <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-cyan-400/10 text-cyan-400 border-r-2 border-cyan-400 active-nav-glow font-bold' : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-100'} ${!isOpen ? 'justify-center' : ''}`} title={label}>
-            <span className={`${isActive ? 'text-cyan-400' : 'text-slate-400'}`}>{icon}</span>
+        <Link href={href} className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 ${isActive ? 'bg-cyan-400/10 text-cyan-400 border-r-2 border-cyan-400 active-nav-glow font-bold' : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/40 hover:text-slate-800 dark:hover:text-slate-100'} ${!isOpen ? 'justify-center' : ''}`} title={label}>
+            <span className={`${isActive ? 'text-cyan-400' : 'text-slate-500 dark:text-slate-400'}`}>{icon}</span>
             {isOpen && <span className="whitespace-nowrap font-label uppercase tracking-wider text-sm">{label}</span>}
         </Link>
     );
