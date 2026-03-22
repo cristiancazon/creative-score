@@ -34,37 +34,37 @@ const content = {
         'Creative Score is built for speed. Configure your scoreboard in seconds and manage every match detail in real time.',
       items: [
         {
-          img: '/img_web/board_designer.jpg',
+          img: '/img_web/nuevo_dash/canvas_board.jpg',
           icon: '🎨',
           title: 'Fully Customizable Board',
           desc: 'Design your scoreboard layout, colors, and branding to match any sport or team identity.',
         },
         {
-          img: '/img_web/match.jpg',
+          img: '/img_web/nuevo_dash/edit_match.jpg',
           icon: '⚡',
           title: 'Real-Time Sync',
           desc: 'Every score, timer, and event updates instantly across all connected displays — zero lag.',
         },
         {
-          img: '/img_web/dashboard.jpg',
+          img: '/img_web/nuevo_dash/dash_night.jpg',
           icon: '🖥️',
           title: 'Intuitive Admin Dashboard',
           desc: 'Manage matches, teams, and players from a clean, modern interface accessible from any device.',
         },
         {
-          img: '/img_web/sports.jpg',
+          img: '/img_web/nuevo_dash/dash_light.jpg',
           icon: '🏆',
           title: 'Multi-Sport Ready',
           desc: 'From basketball and soccer to volleyball and beyond — one platform, all sports.',
         },
         {
-          img: '/img_web/teams.jpg',
+          img: '/img_web/nuevo_dash/teams.jpg',
           icon: '👥',
           title: 'Team & Player Management',
           desc: 'Create rosters, track statistics, and manage substitutions with ease.',
         },
         {
-          img: '/img_web/matches.jpg',
+          img: '/img_web/nuevo_dash/matches.jpg',
           icon: '📅',
           title: 'Match Scheduling',
           desc: 'Organize tournaments, schedule matches, and keep your league calendar always up to date.',
@@ -141,37 +141,37 @@ const content = {
         'Creative Score está diseñado para la velocidad. Configura tu marcador en segundos y gestiona cada detalle del partido en tiempo real.',
       items: [
         {
-          img: '/img_web/board_designer.jpg',
+          img: '/img_web/nuevo_dash/canvas_board.jpg',
           icon: '🎨',
           title: 'Tablero Totalmente Configurable',
           desc: 'Diseña el diseño, colores e identidad de tu marcador para adaptarlo a cualquier deporte o equipo.',
         },
         {
-          img: '/img_web/match.jpg',
+          img: '/img_web/nuevo_dash/edit_match.jpg',
           icon: '⚡',
           title: 'Sincronización en Tiempo Real',
           desc: 'Cada marcador, cronómetro y evento se actualiza al instante en todas las pantallas conectadas — sin retrasos.',
         },
         {
-          img: '/img_web/dashboard.jpg',
+          img: '/img_web/nuevo_dash/dash_night.jpg',
           icon: '🖥️',
           title: 'Panel de Administración Intuitivo',
           desc: 'Gestiona partidos, equipos y jugadores desde una interfaz moderna y limpia, accesible desde cualquier dispositivo.',
         },
         {
-          img: '/img_web/sports.jpg',
+          img: '/img_web/nuevo_dash/dash_light.jpg',
           icon: '🏆',
           title: 'Multi-Deporte',
           desc: 'Desde básquet y fútbol hasta vóley y más — una plataforma para todos los deportes.',
         },
         {
-          img: '/img_web/teams.jpg',
+          img: '/img_web/nuevo_dash/teams.jpg',
           icon: '👥',
           title: 'Gestión de Equipos y Jugadores',
           desc: 'Crea plantillas, lleva estadísticas y gestiona sustituciones con facilidad.',
         },
         {
-          img: '/img_web/matches.jpg',
+          img: '/img_web/nuevo_dash/matches.jpg',
           icon: '📅',
           title: 'Programación de Partidos',
           desc: 'Organiza torneos, programa partidos y mantén el calendario de tu liga siempre actualizado.',
@@ -259,17 +259,17 @@ export default function LandingPage() {
   const t = content[lang];
 
   const mxImages = [
-    '/img_web/controlmx_1.jpg',
-    '/img_web/controlmx_2.jpg',
-    '/img_web/controlmx_3.jpg',
-    '/img_web/controlmx_4.jpg',
+    '/img_web/nuevo_dash/controlmx1.jpg',
+    '/img_web/nuevo_dash/controlmx2.jpg',
+    '/img_web/nuevo_dash/controlmx3.jpg',
+    '/img_web/nuevo_dash/canvas_board.jpg',
   ];
 
   const logiImages = [
-    '/img_web/logi_home_1.png',
-    '/img_web/logi_home_2.png',
-    '/img_web/logi_away_1.png',
-    '/img_web/logi_away_2.png',
+    '/img_web/nuevo_dash/logi_home_1.png',
+    '/img_web/nuevo_dash/logi_home_2.png',
+    '/img_web/nuevo_dash/logi_away_1.png',
+    '/img_web/nuevo_dash/logi_away_2.png',
   ];
 
   useEffect(() => {
@@ -615,7 +615,7 @@ export default function LandingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           {/* Big board screenshot */}
           <motion.div variants={fadeUp} className="relative rounded-2xl overflow-hidden glass aspect-video glow">
-            <Image src="/img_web/borad_game.jpg" alt="Creative Score on court" fill className="object-cover" />
+            <Image src="/img_web/nuevo_dash/canvas_board.jpg" alt="Creative Score on court" fill className="object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#050a15]/60 to-transparent" />
           </motion.div>
 
@@ -636,7 +636,7 @@ export default function LandingPage() {
 
         {/* Login screenshot as secondary visual */}
         <motion.div variants={fadeUp} className="mt-8 relative rounded-2xl overflow-hidden glass aspect-[21/9] hidden lg:block">
-          <Image src="/img_web/login.jpg" alt="Creative Score Admin" fill className="object-cover opacity-70" />
+          <Image src="/img_web/nuevo_dash/dash_light.jpg" alt="Creative Score Admin" fill className="object-cover opacity-70" />
           <div className="absolute inset-0 bg-gradient-to-r from-[#050a15] via-transparent to-[#050a15]" />
         </motion.div>
       </Section>
