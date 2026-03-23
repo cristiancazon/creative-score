@@ -3,24 +3,36 @@
 import { useEffect, useState } from 'react';
 import { directus } from '@/lib/directus';
 import { readItems } from '@directus/sdk';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Video } from 'lucide-react';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({ matches: 0, live: 0, teams: 0 });
+    const [ads, setAds] = useState<any[]>([]);
+    const [loadingAds, setLoadingAds] = useState(true);
 
     useEffect(() => {
         const fetchStats = async () => {
             try {
                 const matches = await directus.request(readItems('matches', { limit: -1, fields: ['status'] }));
                 const teams = await directus.request(readItems('teams', { limit: -1, fields: ['id'] }));
-
+                
                 setStats({
                     matches: matches.length,
                     live: matches.filter((m: any) => m.status === 'live').length,
                     teams: teams.length
                 });
+
+                const adsData = await directus.request(readItems('video_ads' as any, {
+                    fields: ['*', 'match.home_team.name', 'match.away_team.name'] as any,
+                    limit: 5
+                }));
+                setAds(adsData as any);
             } catch (err) {
                 console.error(err);
+            } finally {
+                setLoadingAds(false);
             }
         };
         fetchStats();
@@ -43,78 +55,92 @@ export default function AdminDashboard() {
             </section>
 
             {/* Stats Grid */}
-            <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Card 1 */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    className="glass-card p-6 rounded-3xl flex items-center gap-5 group hover:bg-slate-50 dark:hover:bg-[#192540]/40 transition-all cursor-default"
-                >
-                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 21h-5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"></path><path d="M11 18h2"></path></svg>
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-1">Total Matches</p>
-                        <div className="flex items-baseline gap-3">
-                            <span className="text-3xl font-bold font-headline">{stats.matches}</span>
-                            <span className="text-xs text-emerald-500 font-medium flex items-center">+3%</span>
+            <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Card 1 - Matches */}
+                <Link href="/admin/matches" className="block">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        className="glass-card p-6 rounded-3xl flex items-center gap-5 group hover:bg-slate-50 dark:hover:bg-[#192540]/40 transition-all cursor-pointer border border-transparent hover:border-cyan-500/20"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400 group-hover:bg-cyan-500 group-hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 21h-5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2z"></path><path d="M11 18h2"></path></svg>
                         </div>
-                    </div>
-                </motion.div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-1">Total Matches</p>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-3xl font-bold font-headline">{stats.matches}</span>
+                                <span className="text-xs text-emerald-500 font-medium flex items-center">+3%</span>
+                            </div>
+                        </div>
+                    </motion.div>
+                </Link>
 
-                {/* Card 2 */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: 0.1 }}
-                    className="glass-card p-6 rounded-3xl flex items-center gap-5 group hover:bg-slate-50 dark:hover:bg-[#192540]/40 transition-all cursor-default relative overflow-hidden"
-                >
-                    <div className="absolute top-0 right-0 p-4">
-                        <span className="flex h-3 w-3">
-                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                            <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span>
-                    </div>
-                    <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-1">Live Now</p>
-                        <div className="flex items-baseline gap-3">
-                            <span className="text-3xl font-bold font-headline text-emerald-500">{stats.live}</span>
-                            <span className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-full uppercase font-bold tracking-tighter">Active</span>
+                {/* Card 2 - Teams */}
+                <Link href="/admin/teams" className="block">
+                    <motion.div 
+                        initial={{ opacity: 0, y: 20 }} 
+                        animate={{ opacity: 1, y: 0 }} 
+                        transition={{ delay: 0.1 }}
+                        className="glass-card p-6 rounded-3xl flex items-center gap-5 group hover:bg-slate-50 dark:hover:bg-[#192540]/40 transition-all cursor-pointer border border-transparent hover:border-cyan-500/20"
+                    >
+                        <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500 group-hover:bg-cyan-500 group-hover:text-white transition-all">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         </div>
-                    </div>
-                </motion.div>
-
-                {/* Card 3 */}
-                <motion.div 
-                    initial={{ opacity: 0, y: 20 }} 
-                    animate={{ opacity: 1, y: 0 }} 
-                    transition={{ delay: 0.2 }}
-                    className="glass-card p-6 rounded-3xl flex items-center gap-5 group hover:bg-slate-50 dark:hover:bg-[#192540]/40 transition-all cursor-default"
-                >
-                    <div className="w-14 h-14 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-500">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                    </div>
-                    <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-1">Registered Teams</p>
-                        <div className="flex items-baseline gap-3">
-                            <span className="text-3xl font-bold font-headline text-cyan-600 dark:text-cyan-400">{stats.teams}</span>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-[0.1em] text-slate-500 dark:text-slate-400 mb-1">Registered Teams</p>
+                            <div className="flex items-baseline gap-3">
+                                <span className="text-3xl font-bold font-headline text-cyan-600 dark:text-cyan-400">{stats.teams}</span>
+                            </div>
                         </div>
-                    </div>
-                </motion.div>
+                    </motion.div>
+                </Link>
             </section>
 
             {/* Dashboard Widgets Grid */}
             <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Information Card or Summary */}
+                {/* Video Ads Card */}
                 <div className="lg:col-span-2 glass-card rounded-3xl overflow-hidden flex flex-col p-6">
                     <div className="border-b border-slate-200 dark:border-slate-800/20 flex justify-between items-center pb-4 mb-4">
-                        <h3 className="text-xl font-bold font-headline">Recent Activity</h3>
+                        <h3 className="text-xl font-bold font-headline">Video Ads</h3>
+                        <Link href="/admin/video-ads" className="text-xs text-cyan-500 hover:text-cyan-400 font-bold flex items-center gap-1">
+                            View All <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </Link>
                     </div>
-                    <div className="flex-1 flex items-center justify-center text-slate-400 dark:text-slate-500 text-sm">
-                        <p>Detailed module logs and upcoming matches will be listed here.</p>
+                    <div className="flex-1 overflow-x-auto">
+                        {loadingAds ? (
+                            <div className="h-full flex items-center justify-center text-slate-400 text-sm">Loading ads...</div>
+                        ) : ads.length === 0 ? (
+                            <div className="h-full flex items-center justify-center text-slate-400 text-sm">No video ads active.</div>
+                        ) : (
+                            <table className="w-full text-left text-slate-300">
+                                <thead className="text-slate-600 dark:text-slate-500 uppercase text-xs">
+                                    <tr>
+                                        <th className="pb-3 pr-4 font-bold">Video</th>
+                                        <th className="pb-3 px-4 font-bold">Match</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-200/5 dark:divide-slate-800/20">
+                                    {ads.map((ad: any) => (
+                                        <tr key={ad.id} className="hover:bg-slate-50 dark:hover:bg-[#192540]/20 transition-colors">
+                                            <td className="py-3 pr-4 text-slate-800 dark:text-slate-200 font-semibold flex items-center gap-2">
+                                                <div className="w-7 h-7 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-600 dark:text-cyan-400">
+                                                    <Video size={14} />
+                                                </div>
+                                                <span className="truncate max-w-[150px] text-xs font-mono">{ad.video}</span>
+                                            </td>
+                                            <td className="py-3 px-4 text-slate-500 dark:text-slate-400 text-sm font-medium">
+                                                {ad.match && typeof ad.match === 'object' && ad.match.home_team ? (
+                                                    <span>{ad.match.home_team.name} <span className="text-slate-400 dark:text-slate-600 text-xs">vs</span> {ad.match.away_team.name}</span>
+                                                ) : (
+                                                    <span className="italic text-xs text-slate-400">No match assigned</span>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        )}
                     </div>
                 </div>
 
