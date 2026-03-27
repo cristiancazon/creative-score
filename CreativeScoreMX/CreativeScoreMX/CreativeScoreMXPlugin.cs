@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using Loupedeck;
 
-namespace Loupedeck.CreativeScoreMX.Commands
+namespace Loupedeck.CreativeScoreMX
 {
     public class CreativeScoreMXPlugin : Plugin
     {
@@ -59,7 +59,7 @@ namespace Loupedeck.CreativeScoreMX.Commands
     // BUTTON
     public class ClockMenuButton : PluginDynamicCommand
     {
-        public ClockMenuButton() : base("mx_clock_menu_btn", "Click Menu Reloj", "MX Clock Controls")
+        public ClockMenuButton() : base("Reloj_Click_Menu", "Click Menu Reloj", "MX Clock Controls")
         {
         }
 
@@ -70,24 +70,19 @@ namespace Loupedeck.CreativeScoreMX.Commands
         }
     }
 
-    // ADJUSTMENTS (DIAL/ROLLER)
-    // Using base(true) to make them "Parameterized" which often helps with discovery for Dials
+    // ADJUSTMENTS
     public class WheelMenuAdjustment : PluginDynamicAdjustment
     {
-        public WheelMenuAdjustment() : base(true)
+        // Using the 4-arg constructor: Name, DisplayName, GroupName, IsParameterized
+        public WheelMenuAdjustment() : base("Reloj_Rueda_Menu", "Control Menu Wheel", "MX Clock Controls", true)
         {
-            this.DisplayName = "Control Menu Wheel";
-            this.GroupName = "MX Clock Controls";
             this.Description = "Girar rueda para navegar menú de edición de reloj";
         }
 
         protected override PluginParameter[] GetParameters()
         {
-            // Providing a default parameter so it shows up in the list
             return new[] { new PluginParameter("default", "Rueda Menú", "Navegar") };
         }
-
-        protected override string GetAdjustmentValue(string actionParameter) => "";
 
         protected override void ApplyAdjustment(string actionParameter, int diff)
         {
@@ -95,14 +90,14 @@ namespace Loupedeck.CreativeScoreMX.Commands
             var message = $"{{\"event\":\"keyDown\",\"actionId\":\"{actionId}\"}}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
         }
+
+        protected override String GetAdjustmentValue(String actionParameter) => "";
     }
 
     public class DialClockAdjustment : PluginDynamicAdjustment
     {
-        public DialClockAdjustment() : base(true)
+        public DialClockAdjustment() : base("Reloj_Dial_Ajuste", "Control Clock Dial", "MX Clock Controls", true)
         {
-            this.DisplayName = "Control Clock Dial";
-            this.GroupName = "MX Clock Controls";
             this.Description = "Girar dial para sumar o restar tiempo al reloj";
         }
 
@@ -111,14 +106,14 @@ namespace Loupedeck.CreativeScoreMX.Commands
             return new[] { new PluginParameter("default", "Dial Reloj", "Ajustar tiempo") };
         }
 
-        protected override string GetAdjustmentValue(string actionParameter) => "";
-
         protected override void ApplyAdjustment(string actionParameter, int diff)
         {
             string actionId = diff > 0 ? "dial_right" : "dial_left";
             var message = $"{{\"event\":\"keyDown\",\"actionId\":\"{actionId}\"}}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
         }
+
+        protected override String GetAdjustmentValue(String actionParameter) => "";
     }
 
     // Helper classes
