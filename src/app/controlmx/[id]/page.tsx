@@ -10,6 +10,8 @@ import useWebSocket from 'react-use-websocket';
 import { toPng } from 'html-to-image';
 
 type ViewState = 'main' | 'actions' | 'substitution';
+type ClockEditOption = 'minutos' | 'segundos' | 'posesion' | 'regresar' | null;
+const CLOCK_OPTIONS: ClockEditOption[] = ['minutos', 'segundos', 'posesion', 'regresar'];
 
 export default function ControlMXPage() {
     const params = useParams();
@@ -42,6 +44,15 @@ export default function ControlMXPage() {
     const [videoAds, setVideoAds] = useState<any[]>([]);
     const textAdIndexRef = useRef(0);
     const videoAdIndexRef = useRef(0);
+
+    // Clock Edit State
+    const [clockEditOption, setClockEditOption] = useState<ClockEditOption>(null);
+    const clockEditOptionRef = useRef<ClockEditOption>(null); // Keep a ref for the websocket handler
+
+    // Update the ref whenever the state changes so the websocket has the latest
+    useEffect(() => {
+        clockEditOptionRef.current = clockEditOption;
+    }, [clockEditOption]);
 
     // Check Auth
     useEffect(() => {
@@ -94,6 +105,42 @@ export default function ControlMXPage() {
                 toggleTextAd();
             } else if (mapped === 'ad_video') {
                 toggleVideoAd();
+            }
+        }
+
+        // Clock Modification logic via Wheels and Dials
+        if (msg.actionId) {
+            const isPaused = matchRef.current?.status !== 'live';
+            const actionId = msg.actionId;
+            
+            if (isPaused) {
+                if (actionId === 'wheel_up' || actionId === 'wheel_down') {
+                    // Navigate Submenu
+                    const currentIdx = clockEditOptionRef.current ? CLOCK_OPTIONS.indexOf(clockEditOptionRef.current) : -1;
+                    if (actionId === 'wheel_up') {
+                        const newIdx = currentIdx <= 0 ? CLOCK_OPTIONS.length - 1 : currentIdx - 1;
+                        setClockEditOption(CLOCK_OPTIONS[newIdx]);
+                    } else if (actionId === 'wheel_down') {
+                        const newIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % CLOCK_OPTIONS.length;
+                        setClockEditOption(CLOCK_OPTIONS[newIdx]);
+                    }
+                }
+
+                if ((actionId === 'dial_left' || actionId === 'dial_right') && clockEditOptionRef.current) {
+                    if (clockEditOptionRef.current === 'regresar') {
+                        if (actionId === 'dial_right' || actionId === 'dial_left') {
+                            setClockEditOption(null); // Exit menu
+                        }
+                    } else {
+                        const direction = actionId === 'dial_right' ? 1 : -1;
+                        handleClockAdjustment(clockEditOptionRef.current, direction);
+                    }
+                }
+            } else {
+                // If game is live and they try to use the menu, maybe clear it or ignore.
+                if (clockEditOptionRef.current) {
+                    setClockEditOption(null);
+                }
             }
         }
     }, [lastJsonMessage]);
@@ -230,7 +277,54 @@ export default function ControlMXPage() {
         fetchData();
         const interval = setInterval(fetchData, 2000); // Poll every 2 seconds for sync
         return () => clearInterval(interval);
-    }, [id, isAuthenticated]); // Removed homePlayers.length to avoid infinite loop / multiple fetches
+    }, [id, isAuthenticated]);
+
+    // Keep a ref of match for the websocket un-binded handlers
+    const matchRef = useRef<Match | null>(null);
+    useEffect(() => {
+        matchRef.current = match;
+    }, [match]);
+
+    // Fast-update local timer adjustments logic (debounced push to directus)
+    const updateDebounceRef = useRef<NodeJS.Timeout | null>(null);
+
+    const handleClockAdjustment = (option: ClockEditOption, amount: number) => {
+        if (!matchRef.current) return;
+        const currentMatch = matchRef.current;
+        let newTimer = currentMatch.timer_seconds;
+        let newGamestate = { ...currentMatch.gamestate };
+
+        if (option === 'minutos') {
+            newTimer = Math.max(0, currentMatch.timer_seconds + amount * 60);
+        } else if (option === 'segundos') {
+            newTimer = Math.max(0, currentMatch.timer_seconds + amount);
+        } else if (option === 'posesion') {
+            const currentSc = currentMatch.gamestate?.shot_clock?.seconds ?? 24;
+            const newSc = Math.max(0, currentSc + amount);
+            newGamestate.shot_clock = {
+                ...currentMatch.gamestate?.shot_clock,
+                seconds: newSc,
+                started_at: null
+            };
+        }
+
+        // Optimistically update UI
+        setLocalTimer(newTimer);
+        setMatch(prev => prev ? { ...prev, timer_seconds: newTimer, gamestate: newGamestate } : null);
+
+        // Debounce DB save
+        if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
+        updateDebounceRef.current = setTimeout(async () => {
+            try {
+                await directus.request(updateItem('matches', currentMatch.id, {
+                    timer_seconds: newTimer,
+                    gamestate: newGamestate
+                }));
+            } catch (err) {
+                console.error("Failed to update clock via dial:", err);
+            }
+        }, 300);
+    };
 
     // Timer simulation
     useEffect(() => {
@@ -695,7 +789,28 @@ export default function ControlMXPage() {
     else if (isET) timerActionLabel = 'Next Q';
 
     return (
-        <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient">
+        <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient relative">
+            
+            {/* Clock Modification Overlay */}
+            {clockEditOption && (
+                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center">
+                    <div className="bg-[#0e1726]/90 border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.2)] p-8 rounded-3xl flex flex-col items-center max-w-sm w-full">
+                        <h2 className="text-2xl font-black text-cyan-400 mb-6 uppercase tracking-widest text-center">Ajuste Manual</h2>
+                        <div className="w-full space-y-3">
+                            {CLOCK_OPTIONS.map((opt) => (
+                                <div key={opt} className={`w-full py-4 text-center rounded-xl font-bold uppercase tracking-wider text-sm transition-all ${clockEditOption === opt ? 'bg-cyan-500/20 border-2 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-105' : 'bg-white/5 border border-transparent text-slate-500'}`}>
+                                    {opt === 'minutos' ? 'Minutos del Partido' : opt === 'segundos' ? 'Segundos del Partido' : opt === 'posesion' ? 'Reloj 14/24' : 'Salir'}
+                                </div>
+                            ))}
+                        </div>
+                        <div className="mt-8 text-center opacity-60 space-y-2 text-xs">
+                            <p><b>Wheel Vertical:</b> Navegar Menú</p>
+                            <p><b>Dial Central:</b> Sumar o Restar Tiempo</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header Info */}
             <div className="flex justify-between items-end mb-8 px-2">
                 <div className="flex flex-col">

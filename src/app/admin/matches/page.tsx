@@ -152,14 +152,7 @@ export default function MatchesList() {
                                             >
                                                 <Monitor size={18} />
                                             </Link>
-                                            <Link
-                                                href={`/control/${match.id}`}
-                                                target="_blank"
-                                                className="p-2 hover:bg-cyan-500/10 rounded-xl text-green-400 hover:text-green-300 transition-all duration-200 hover:shadow-[0_0_10px_rgba(34,197,94,0.2)]"
-                                                title="Open Control"
-                                            >
-                                                <Gamepad2 size={18} />
-                                            </Link>
+
                                             <Link
                                                 href={`/controlmx/${match.id}`}
                                                 target="_blank"
