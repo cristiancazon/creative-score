@@ -10,8 +10,6 @@ import useWebSocket from 'react-use-websocket';
 import { toPng } from 'html-to-image';
 
 type ViewState = 'main' | 'actions' | 'substitution';
-type ClockEditOption = 'minutos' | 'segundos' | 'posesion' | 'regresar' | null;
-const CLOCK_OPTIONS: ClockEditOption[] = ['minutos', 'segundos', 'posesion', 'regresar'];
 
 export default function ControlMXPage() {
     const params = useParams();
@@ -46,13 +44,13 @@ export default function ControlMXPage() {
     const videoAdIndexRef = useRef(0);
 
     // Clock Edit State
-    const [clockEditOption, setClockEditOption] = useState<ClockEditOption>(null);
-    const clockEditOptionRef = useRef<ClockEditOption>(null); // Keep a ref for the websocket handler
+    const [activeClockSelection, setActiveClockSelection] = useState<'game_min' | 'game_sec' | 'shot_sec' | null>(null);
+    const activeClockSelectionRef = useRef<'game_min' | 'game_sec' | 'shot_sec' | null>(null);
 
     // Update the ref whenever the state changes so the websocket has the latest
     useEffect(() => {
-        clockEditOptionRef.current = clockEditOption;
-    }, [clockEditOption]);
+        activeClockSelectionRef.current = activeClockSelection;
+    }, [activeClockSelection]);
 
     // Check Auth
     useEffect(() => {
@@ -113,33 +111,24 @@ export default function ControlMXPage() {
             const isPaused = matchRef.current?.status !== 'live';
             const actionId = msg.actionId;
             
-            if (isPaused) {
-                if (actionId === 'wheel_up' || actionId === 'wheel_down') {
-                    // Navigate Submenu
-                    const currentIdx = clockEditOptionRef.current ? CLOCK_OPTIONS.indexOf(clockEditOptionRef.current) : -1;
-                    if (actionId === 'wheel_up') {
-                        const newIdx = currentIdx <= 0 ? CLOCK_OPTIONS.length - 1 : currentIdx - 1;
-                        setClockEditOption(CLOCK_OPTIONS[newIdx]);
-                    } else if (actionId === 'wheel_down') {
-                        const newIdx = currentIdx === -1 ? 0 : (currentIdx + 1) % CLOCK_OPTIONS.length;
-                        setClockEditOption(CLOCK_OPTIONS[newIdx]);
-                    }
-                }
+            // Handle Toggle Buttons
+            if (actionId === 'mx_reloj_game_min') {
+                setActiveClockSelection(prev => prev === 'game_min' ? null : 'game_min');
+            } else if (actionId === 'mx_reloj_game_sec') {
+                setActiveClockSelection(prev => prev === 'game_sec' ? null : 'game_sec');
+            } else if (actionId === 'mx_reloj_1424_sec') {
+                setActiveClockSelection(prev => prev === 'shot_sec' ? null : 'shot_sec');
+            }
 
-                if ((actionId === 'dial_left' || actionId === 'dial_right') && clockEditOptionRef.current) {
-                    if (clockEditOptionRef.current === 'regresar') {
-                        if (actionId === 'dial_right' || actionId === 'dial_left') {
-                            setClockEditOption(null); // Exit menu
-                        }
-                    } else {
-                        const direction = actionId === 'dial_right' ? 1 : -1;
-                        handleClockAdjustment(clockEditOptionRef.current, direction);
-                    }
-                }
-            } else {
-                // If game is live and they try to use the menu, maybe clear it or ignore.
-                if (clockEditOptionRef.current) {
-                    setClockEditOption(null);
+            // Handle Rotation
+            if (isPaused && activeClockSelectionRef.current) {
+                if (actionId === 'dial_left' || actionId === 'dial_right') {
+                    const direction = actionId === 'dial_right' ? 1 : -1;
+                    const mode = activeClockSelectionRef.current;
+                    
+                    if (mode === 'game_min') handleClockAdjustment('minutos', direction);
+                    else if (mode === 'game_sec') handleClockAdjustment('segundos', direction);
+                    else if (mode === 'shot_sec') handleClockAdjustment('posesion', direction);
                 }
             }
         }
@@ -288,7 +277,7 @@ export default function ControlMXPage() {
     // Fast-update local timer adjustments logic (debounced push to directus)
     const updateDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
-    const handleClockAdjustment = (option: ClockEditOption, amount: number) => {
+    const handleClockAdjustment = (option: 'minutos' | 'segundos' | 'posesion', amount: number) => {
         if (!matchRef.current) return;
         const currentMatch = matchRef.current;
         let newTimer = currentMatch.timer_seconds;
@@ -791,26 +780,6 @@ export default function ControlMXPage() {
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient relative">
             
-            {/* Clock Modification Overlay */}
-            {clockEditOption && (
-                <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center">
-                    <div className="bg-[#0e1726]/90 border border-cyan-500/30 shadow-[0_0_50px_rgba(6,182,212,0.2)] p-8 rounded-3xl flex flex-col items-center max-w-sm w-full">
-                        <h2 className="text-2xl font-black text-cyan-400 mb-6 uppercase tracking-widest text-center">Ajuste Manual</h2>
-                        <div className="w-full space-y-3">
-                            {CLOCK_OPTIONS.map((opt) => (
-                                <div key={opt} className={`w-full py-4 text-center rounded-xl font-bold uppercase tracking-wider text-sm transition-all ${clockEditOption === opt ? 'bg-cyan-500/20 border-2 border-cyan-400 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.3)] scale-105' : 'bg-white/5 border border-transparent text-slate-500'}`}>
-                                    {opt === 'minutos' ? 'Minutos del Partido' : opt === 'segundos' ? 'Segundos del Partido' : opt === 'posesion' ? 'Reloj 14/24' : 'Salir'}
-                                </div>
-                            ))}
-                        </div>
-                        <div className="mt-8 text-center opacity-60 space-y-2 text-xs">
-                            <p><b>Wheel Vertical:</b> Navegar Menú</p>
-                            <p><b>Dial Central:</b> Sumar o Restar Tiempo</p>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             {/* Header Info */}
             <div className="flex justify-between items-end mb-8 px-2">
                 <div className="flex flex-col">
@@ -825,9 +794,15 @@ export default function ControlMXPage() {
                     </h1>
                 </div>
                 <div className="text-right flex flex-col items-end">
-                    <div className="text-4xl font-mono font-black italic tracking-tighter flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border border-white/10">
+                    <div className={`text-4xl font-mono font-black italic tracking-tighter flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border transition-all duration-300 ${activeClockSelection ? 'border-cyan-500/50 shadow-[0_0_20px_rgba(6,182,212,0.2)] scale-105' : 'border-white/10'}`}>
                         <span className={`w-3 h-3 rounded-full ${isRunning ? 'bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]' : 'bg-red-500 shadow-[0_0_10px_#ef4444]'}`}></span>
-                        {Math.floor(localTimer / 60).toString().padStart(2, '0')}:{(localTimer % 60).toString().padStart(2, '0')}
+                        <span className={`transition-colors ${activeClockSelection === 'game_min' ? 'text-cyan-400' : ''}`}>
+                            {Math.floor(localTimer / 60).toString().padStart(2, '0')}
+                        </span>
+                        <span className="opacity-30">:</span>
+                        <span className={`transition-colors ${activeClockSelection === 'game_sec' ? 'text-cyan-400' : ''}`}>
+                            {(localTimer % 60).toString().padStart(2, '0')}
+                        </span>
                     </div>
                 </div>
             </div>
@@ -915,17 +890,17 @@ export default function ControlMXPage() {
                         <button
                             id="mx_btn_7"
                             onClick={() => handleGridAction(7)}
-                            className="rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60"
+                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${activeClockSelection === 'shot_sec' ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]' : 'bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60'}`}
                         >
-                            <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">14</span>
+                            <span className={`text-6xl font-black transition-transform ${activeClockSelection === 'shot_sec' ? 'text-cyan-400 scale-110' : 'text-red-500'}`}>14</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">X</span>
                         </button>
                         <button
                             id="mx_btn_8"
                             onClick={() => handleGridAction(8)}
-                            className="rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60"
+                            className={`rounded-[2.5rem] flex flex-col items-center justify-center transition-all active:scale-95 border-2 relative group ${activeClockSelection === 'shot_sec' ? 'bg-cyan-500/20 border-cyan-400 shadow-[0_0_20px_rgba(6,182,212,0.3)]' : 'bg-red-900/10 border-red-500/30 text-red-500 hover:border-red-500/60'}`}
                         >
-                            <span className="text-6xl font-black text-red-500 group-hover:scale-110 transition-transform">24</span>
+                            <span className={`text-6xl font-black transition-transform ${activeClockSelection === 'shot_sec' ? 'text-cyan-400 scale-110' : 'text-red-500'}`}>24</span>
                             <span className="absolute top-4 left-5 text-[10px] opacity-20 font-black">C</span>
                         </button>
                     </>
