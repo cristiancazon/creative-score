@@ -32,6 +32,8 @@ export default function ControlMXPage() {
     // Ads State
     const [textAds, setTextAds] = useState<any[]>([]);
     const [videoAds, setVideoAds] = useState<any[]>([]);
+    const textAdIndexRef = useRef(0);
+    const videoAdIndexRef = useRef(0);
 
     // Clock Edit State & Refs
     const [activeClockSelection, setActiveClockSelection] = useState<'game_min' | 'game_sec' | 'shot_sec' | null>(null);
@@ -52,37 +54,29 @@ export default function ControlMXPage() {
                 if (!token) { router.push('/login'); return; }
                 await directus.request(readMe());
                 setIsAuthenticated(true);
-            } catch (e) { console.error("Auth check failed:", e); router.push('/login'); }
+            } catch (e) { router.push('/login'); }
         };
         checkAuth();
     }, [router]);
 
-    // WebSocket to local Logi C# Plugin
     const { sendMessage: sendWsMessage, lastJsonMessage } = useWebSocket('ws://127.0.0.1:8081', {
         shouldReconnect: () => true,
         reconnectAttempts: 100,
         reconnectInterval: 3000,
     });
 
-    // Clock Adjustment Handler
     const handleClockAdjustment = (option: 'minutos' | 'segundos' | 'posesion', amount: number) => {
         if (!matchRef.current) return;
         const currentMatch = matchRef.current;
         let newTimer = currentMatch.timer_seconds;
         let newGamestate = { ...currentMatch.gamestate };
 
-        if (option === 'minutos') {
-            newTimer = Math.max(0, currentMatch.timer_seconds + amount * 60);
-        } else if (option === 'segundos') {
-            newTimer = Math.max(0, currentMatch.timer_seconds + amount);
-        } else if (option === 'posesion') {
+        if (option === 'minutos') newTimer = Math.max(0, currentMatch.timer_seconds + amount * 60);
+        else if (option === 'segundos') newTimer = Math.max(0, currentMatch.timer_seconds + amount);
+        else if (option === 'posesion') {
             const currentSc = currentMatch.gamestate?.shot_clock?.seconds ?? 24;
             const newSc = Math.max(0, currentSc + amount);
-            newGamestate.shot_clock = {
-                ...currentMatch.gamestate?.shot_clock,
-                seconds: newSc,
-                started_at: null
-            };
+            newGamestate.shot_clock = { ...currentMatch.gamestate?.shot_clock, seconds: newSc, started_at: null };
         }
 
         setLocalTimer(newTimer);
@@ -91,15 +85,11 @@ export default function ControlMXPage() {
         if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
         updateDebounceRef.current = setTimeout(async () => {
             try {
-                await directus.request(updateItem('matches', currentMatch.id, {
-                    timer_seconds: newTimer,
-                    gamestate: newGamestate
-                }));
-            } catch (err) { console.error("Failed to update clock:", err); }
+                await directus.request(updateItem('matches', currentMatch.id, { timer_seconds: newTimer, gamestate: newGamestate }));
+            } catch (err) {}
         }, 300);
     };
 
-    // WebSocket Message Handler
     useEffect(() => {
         if (!lastJsonMessage) return;
         const msg = lastJsonMessage as any;
@@ -118,13 +108,13 @@ export default function ControlMXPage() {
             const mapped = actionMap[actionId];
             if (typeof mapped === 'number') handleGridAction(mapped);
             else if (mapped === 'home' || mapped === 'away') setSelectedTeam(mapped as any);
+            else if (mapped === 'ad_text') toggleTextAd();
+            else if (mapped === 'ad_video') toggleVideoAd();
             
-            // Toggles
             if (actionId === 'mx_reloj_game_min') setActiveClockSelection(prev => prev === 'game_min' ? null : 'game_min');
             else if (actionId === 'mx_reloj_game_sec') setActiveClockSelection(prev => prev === 'game_sec' ? null : 'game_sec');
             else if (actionId === 'mx_reloj_1424_sec') setActiveClockSelection(prev => prev === 'shot_sec' ? null : 'shot_sec');
 
-            // Dial
             if (isPaused) {
                 if (actionId === 'dial_click') setActiveClockSelection(null);
                 else if (activeClockSelectionRef.current && (actionId === 'dial_left' || actionId === 'dial_right')) {
@@ -143,10 +133,9 @@ export default function ControlMXPage() {
         }
     }, [lastJsonMessage]);
 
-    // Stream Images (Fixed Full Screen & Hidden Icons)
     useEffect(() => {
         const streamImages = async () => {
-            await new Promise(resolve => setTimeout(resolve, 300));
+            await new Promise(resolve => setTimeout(resolve, 400));
             const images = [];
             const idsToCapture = [
                 ...[0,1,2,3,4,5,6,7,8].map(i => `mx_btn_${i}`),
@@ -157,8 +146,8 @@ export default function ControlMXPage() {
                 if (node) {
                     try {
                         const dataUrl = await toPng(node, { 
-                            quality: 0.9, pixelRatio: 1, backgroundColor: '#000000', width: 250, height: 150,
-                            style: { width: '250px', height: '150px', margin: '0', padding: '0', borderRadius: '0', border: 'none', display: 'flex' }
+                            quality: 0.9, pixelRatio: 1, backgroundColor: '#000000', width: 250, height: 156,
+                            style: { width: '250px', height: '156px', margin: '0', padding: '0', borderRadius: '0', border: 'none', display: 'flex' }
                         });
                         const base64 = dataUrl.replace(/^data:image\/png;base64,/, "");
                         let actionId = id;
@@ -173,97 +162,154 @@ export default function ControlMXPage() {
         if (match) streamImages();
     }, [match?.gamestate, selectedTeam, view, activePlayer?.id, match?.status, activeClockSelection]);
 
-    // Data Sync
     useEffect(() => {
         if (!id || !isAuthenticated) return;
         const fetchData = async () => {
             try {
                 const matchData = (await directus.request(readItem('matches', id, { fields: ['*', 'home_team.*', 'away_team.*'] as any }))) as any as Match;
                 setMatch(matchData);
-                const tAds = await directus.request(readItems('text_ads' as any, { filter: { match: { _eq: id } } as any }));
-                setTextAds(tAds as any[]);
-                const vAds = await directus.request(readItems('video_ads' as any, { filter: { match: { _eq: id } } as any }));
-                setVideoAds(vAds as any[]);
-                const homeTeamId = matchData.home_team ? (typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
-                const awayTeamId = matchData.away_team ? (typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
-                if (homeTeamId && awayTeamId && homePlayers.length === 0) {
-                    const playersData = (await directus.request(readItems('players', { filter: { _or: [{ team: { _eq: homeTeamId } }, { team: { _eq: awayTeamId } }] }, limit: 100 }))) as Player[];
-                    setHomePlayers(playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === homeTeamId).sort((a,b)=>a.number-b.number));
-                    setAwayPlayers(playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === awayTeamId).sort((a,b)=>a.number-b.number));
+                const tAds = (await directus.request(readItems('text_ads' as any, { filter: { match: { _eq: id } } as any }))) as any[];
+                setTextAds(tAds);
+                const vAds = (await directus.request(readItems('video_ads' as any, { filter: { match: { _eq: id } } as any }))) as any[];
+                setVideoAds(vAds);
+                const hId = matchData.home_team ? (typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
+                const aId = matchData.away_team ? (typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
+                if (hId && aId && homePlayers.length === 0) {
+                    const ps = (await directus.request(readItems('players', { filter: { _or: [{ team: { _eq: hId } }, { team: { _eq: aId } }] }, limit: 100 }))) as Player[];
+                    setHomePlayers(ps.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === hId).sort((a,b)=>a.number-b.number));
+                    setAwayPlayers(ps.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === aId).sort((a,b)=>a.number-b.number));
                 }
-            } catch (err) {
-                console.error("Fetch error:", err);
-            } finally {
-                setLoading(false);
-            }
+            } catch (err) {} finally { setLoading(false); }
         };
         fetchData();
         const interval = setInterval(fetchData, 2000);
         return () => clearInterval(interval);
     }, [id, isAuthenticated]);
 
-    // Timer Simulation
     useEffect(() => {
         const up = () => {
             if (!match) return;
             if (match.status === 'live' && match.timer_started_at) {
                 const now = new Date().getTime();
-                const startedAt = new Date(match.timer_started_at).getTime();
-                const elapsed = Math.floor((now - startedAt) / 1000);
-                setLocalTimer(Math.max(0, match.timer_seconds - elapsed));
-            } else { setLocalTimer(match.timer_seconds); }
+                const sAt = new Date(match.timer_started_at).getTime();
+                setLocalTimer(Math.max(0, match.timer_seconds - Math.floor((now - sAt) / 1000)));
+            } else setLocalTimer(match.timer_seconds);
         };
         up();
         const interval = setInterval(up, 200);
         return () => clearInterval(interval);
     }, [match]);
 
-    // Handlers
-    const toggleTimer = async () => { 
+    const toggleTimer = async () => {
         if (!match) return;
-        const isLive = match.status === 'live';
-        const newStatus = isLive ? 'paused' : 'live';
-        const update: any = { status: newStatus };
-        if (newStatus === 'live') {
-            update.timer_started_at = new Date().toISOString();
-        } else {
-            update.timer_seconds = localTimer;
-            update.timer_started_at = null;
+        const s = match.status === 'live' ? 'paused' : 'live';
+        await directus.request(updateItem('matches', match.id, {
+            status: s,
+            timer_seconds: localTimer,
+            timer_started_at: s === 'live' ? new Date().toISOString() : null
+        }));
+    };
+
+    const resetShotClock = async (seconds: 14 | 24) => {
+        if (!match) return;
+        const gs = { ...match.gamestate, shot_clock: { seconds, started_at: match.status === 'live' ? new Date().toISOString() : null } };
+        await directus.request(updateItem('matches', match.id, { gamestate: gs }));
+    };
+
+    const toggleTextAd = async () => {
+        if (textAds.length === 0 || !match) return;
+        const next = (textAdIndexRef.current + 1) % textAds.length;
+        textAdIndexRef.current = next;
+        await directus.request(updateItem('matches', match.id, { ad_text: textAds[next].text }));
+    };
+
+    const toggleVideoAd = async () => {
+        if (videoAds.length === 0 || !match) return;
+        const next = (videoAdIndexRef.current + 1) % videoAds.length;
+        videoAdIndexRef.current = next;
+        await directus.request(updateItem('matches', match.id, { ad_video: videoAds[next].id }));
+    };
+
+    const handleTimeout = async () => {
+        if (!match) return;
+        const teamKey = selectedTeam === 'home' ? 'home_timeouts' : 'away_timeouts';
+        const current = match.gamestate?.[teamKey] || 0;
+        await directus.request(updateItem('matches', match.id, { gamestate: { ...match.gamestate, [teamKey]: Math.max(0, current + 1) } }));
+    };
+
+    const handlePlayerAction = async (type: 'pts' | 'foul', value: number) => {
+        if (!match || !activePlayer) return;
+        const pid = String(activePlayer.id);
+        const stats = { ...(match.gamestate?.player_stats || {}) };
+        if (!stats[pid]) stats[pid] = { pts: 0, fouls: 0 };
+        if (type === 'pts') stats[pid].pts = Math.max(0, (stats[pid].pts || 0) + value);
+        if (type === 'foul') stats[pid].fouls = Math.max(0, (stats[pid].fouls || 0) + value);
+
+        const update: any = { gamestate: { ...match.gamestate, player_stats: stats } };
+        if (type === 'pts') {
+            const teamPts = selectedTeam === 'home' ? 'home_score' : 'away_score';
+            update[teamPts] = Math.max(0, (match[teamPts] || 0) + value);
         }
         await directus.request(updateItem('matches', match.id, update));
     };
-    const resetShotClock = async (seconds: 14 | 24) => {
-        if (!match) return;
-        const newGs = { ...match.gamestate, shot_clock: { seconds, started_at: match.status === 'live' ? new Date().toISOString() : null } };
-        await directus.request(updateItem('matches', match.id, { gamestate: newGs }));
-    };
-    const handleGridAction = (index: number) => {
-        if (view === 'main') {
-            const currentOnCourt = getOnCourt();
-            if (index < 5 && currentOnCourt[index]) { 
-                setActivePlayer(currentOnCourt[index]); 
-                setView('actions'); 
-            }
-            else if (index === 5) {} // TO
-            else if (index === 6) toggleTimer();
-            else if (index === 7) resetShotClock(14);
-            else if (index === 8) resetShotClock(24);
+
+    const confirmSubstitution = async (benchId: string) => {
+        if (!match || !activePlayer) return;
+        const courtKey = selectedTeam === 'home' ? 'home_on_court' : 'away_on_court';
+        const court = [...(match.gamestate?.[courtKey] || [])];
+        const idx = court.findIndex(cid => String(typeof cid === 'object' ? cid.id : cid) === String(activePlayer.id));
+        if (idx !== -1) {
+            court[idx] = benchId;
+            await directus.request(updateItem('matches', match.id, { gamestate: { ...match.gamestate, [courtKey]: court } }));
+            setView('main'); setActivePlayer(null);
         }
     };
+
+    const getStrId = (id: any) => (typeof id === 'object' ? id.id : String(id));
     const getOnCourt = () => {
         if (!match) return [];
         const teamPlayers = selectedTeam === 'home' ? homePlayers : awayPlayers;
         const courtIds = (selectedTeam === 'home' ? match.gamestate?.home_on_court : match.gamestate?.away_on_court) as any[] || [];
-        const onCourt = teamPlayers.filter(p => courtIds.some(cid => (typeof cid === 'object' ? cid.id : String(cid)) === String(p.id)));
+        const onCourt = teamPlayers.filter(p => courtIds.some(cid => getStrId(cid) === getStrId(p.id)));
         return (onCourt.length > 0 ? onCourt : teamPlayers.slice(0, 5)).sort((a,b)=>a.number-b.number).slice(0,5);
+    };
+    const getBench = () => {
+        const teamPlayers = selectedTeam === 'home' ? homePlayers : awayPlayers;
+        const onCourtIds = getOnCourt().map(p => getStrId(p.id));
+        return teamPlayers.filter(p => !onCourtIds.includes(getStrId(p.id)));
+    };
+
+    const handleGridAction = (index: number) => {
+        if (view === 'main') {
+            const players = getOnCourt();
+            if (index < 5) { if (players[index]) { setActivePlayer(players[index]); setView('actions'); } }
+            else if (index === 5) handleTimeout();
+            else if (index === 6) toggleTimer();
+            else if (index === 7) resetShotClock(14);
+            else if (index === 8) resetShotClock(24);
+        } else if (view === 'actions') {
+            if (index < 3) handlePlayerAction('pts', index + 1);
+            else if (index === 3) handlePlayerAction('pts', -1);
+            else if (index === 4) setView('substitution');
+            else if (index === 5) { setView('main'); setActivePlayer(null); }
+            else if (index === 6) handlePlayerAction('foul', 1);
+            else if (index === 7) handlePlayerAction('foul', -1);
+        } else if (view === 'substitution') {
+            const bench = getBench();
+            if (index < bench.length) confirmSubstitution(bench[index].id);
+            else if (index === 8) setView('actions');
+        }
     };
 
     if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono gap-3">
         <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
         <span>CARGANDO SCOREBOARD...</span>
     </div>;
-    
-    if (!match) return <div className="min-h-screen bg-black flex items-center justify-center text-white">No se encontró el partido o hubo un error de conexión.</div>;
+    if (!match) return <div>No match.</div>;
+
+    const teamColor = selectedTeam === 'home' ? 'purple' : 'green';
+    const players = getOnCourt();
+    const bench = getBench();
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient relative">
@@ -274,12 +320,10 @@ export default function ControlMXPage() {
                 </div>
                 
                 <div className="flex items-center gap-4">
-                    {/* Shot Clock UI */}
                     <div className={`text-2xl font-mono font-black italic bg-red-950/20 px-3 py-1.5 rounded-xl border transition-all duration-300 ${activeClockSelection === 'shot_sec' ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.3)] scale-110' : 'border-red-500/10'}`}>
                         <span className="text-[10px] block opacity-30 text-center uppercase -mb-1">SHOT</span>
                         <span className={activeClockSelection === 'shot_sec' ? 'text-amber-400' : 'text-red-500/40'}>{(match.gamestate?.shot_clock?.seconds ?? 24).toString().padStart(2, '0')}</span>
                     </div>
-                    {/* Game Clock UI */}
                     <div className={`text-4xl font-mono font-black italic flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border transition-all duration-300 ${activeClockSelection && activeClockSelection !== 'shot_sec' ? 'border-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.2)] scale-105' : 'border-white/10'}`}>
                         <span className={activeClockSelection === 'game_min' ? 'text-cyan-400' : ''}>{Math.floor(localTimer / 60).toString().padStart(2, '0')}</span>
                         <span className="opacity-30">:</span>
@@ -289,32 +333,42 @@ export default function ControlMXPage() {
             </div>
 
             <div className="grid grid-cols-3 grid-rows-3 gap-4 flex-1 max-w-[600px] mx-auto w-full mb-8">
-                {[0,1,2,3,4,5,6,7,8].map(i => (
-                    <button key={i} id={`mx_btn_${i}`} onClick={() => handleGridAction(i)} className={`rounded-[2.5rem] border-2 transition-all active:scale-95 flex flex-col items-center justify-center ${i === 6 && match.status === 'live' ? 'bg-amber-500/10 border-amber-500/30' : 'bg-white/5 border-white/10'}`}>
-                        <span className="text-4xl font-black">{i < 5 ? (getOnCourt()[i]?.number || '...') : i === 6 ? (match.status === 'live' ? '||' : '>') : i === 7 ? '14' : i === 8 ? '24' : 'TO'}</span>
+                {view === 'main' && [0,1,2,3,4,5,6,7,8].map(i => {
+                    const isPlayer = i < 5;
+                    const p = players[i];
+                    return (
+                        <button key={i} id={`mx_btn_${i}`} onClick={() => handleGridAction(i)} className={`rounded-[2.5rem] border-2 transition-all active:scale-95 flex flex-col items-center justify-center ${isPlayer ? (selectedTeam === 'home' ? 'bg-purple-950/20 border-purple-500/30' : 'bg-green-950/20 border-green-500/30') : i === 6 ? (match.status === 'live' ? 'bg-amber-500/20 border-amber-500 ring-2 ring-amber-500/20 shadow-[0_0_20px_rgba(245,158,11,0.3)]' : 'bg-white/5 border-white/10') : 'bg-white/5 border-white/10'}`}>
+                            <span className="text-4xl font-black">{isPlayer ? (p?.number || '...') : i === 5 ? 'TO' : i === 6 ? (match.status === 'live' ? '||' : '>') : i === 7 ? '14' : '24'}</span>
+                            {isPlayer && p && <span className="text-[10px] uppercase font-bold opacity-40 mt-1">{p.last_name || p.name}</span>}
+                        </button>
+                    );
+                })}
+                {view === 'actions' && [0,1,2,3,4,5,6,7,8].map(i => (
+                    <button key={i} id={`mx_btn_${i}`} onClick={() => handleGridAction(i)} className="rounded-[2.5rem] border-2 border-white/10 bg-white/5 flex flex-col items-center justify-center transition-all">
+                        <span className="text-2xl font-black">{i < 3 ? `+${i+1}` : i === 3 ? '-1' : i === 4 ? 'SUB' : i === 5 ? 'BACK' : i === 6 ? 'F+' : i === 7 ? 'F-' : ''}</span>
                     </button>
                 ))}
+                {view === 'substitution' && [0,1,2,3,4,5,6,7,8].map(i => {
+                    const p = bench[i];
+                    return (
+                        <button key={i} id={`mx_btn_${i}`} onClick={() => handleGridAction(i)} className="rounded-[2.5rem] border-2 border-white/10 bg-white/5 flex flex-col items-center justify-center transition-all px-2">
+                            <span className="text-2xl font-black">{p?.number || (i === 8 ? 'X' : '.')}</span>
+                            {p && <span className="text-[8px] uppercase font-bold opacity-40 truncate w-full text-center">{p.last_name || p.name}</span>}
+                        </button>
+                    );
+                })}
             </div>
 
             <div className="flex gap-4">
-                <button id="mx_team_local" onClick={() => setSelectedTeam('home')} className={`flex-1 h-20 rounded-2xl border-2 font-black ${selectedTeam === 'home' ? 'bg-purple-600 border-purple-400' : 'bg-white/5 opacity-50 border-transparent'}`}>LOCAL</button>
-                <button id="mx_team_visitor" onClick={() => setSelectedTeam('away')} className={`flex-1 h-20 rounded-2xl border-2 font-black ${selectedTeam === 'away' ? 'bg-green-600 border-green-400' : 'bg-white/5 opacity-50 border-transparent'}`}>VISITANTE</button>
+                <button id="mx_team_local" onClick={() => setSelectedTeam('home')} className={`flex-1 h-20 rounded-2xl border-2 font-black transition-all ${selectedTeam === 'home' ? 'bg-purple-600 border-purple-400 shadow-[0_0_20px_rgba(147,51,234,0.4)]' : 'bg-white/5 opacity-50 border-transparent'}`}>LOCAL</button>
+                <button id="mx_team_visitor" onClick={() => setSelectedTeam('away')} className={`flex-1 h-20 rounded-2xl border-2 font-black transition-all ${selectedTeam === 'away' ? 'bg-green-600 border-green-400 shadow-[0_0_20px_rgba(22,163,74,0.4)]' : 'bg-white/5 opacity-50 border-transparent'}`}>VISITANTE</button>
             </div>
 
-            {/* Hidden Icon Stage for capture */}
             <div className="fixed top-[-1000px] left-0 pointer-events-none opacity-0">
-                <div id="mx_reloj_game_min" className={`w-[250px] h-[150px] flex items-center justify-center bg-black ${activeClockSelection === 'game_min' ? 'bg-cyan-900/40' : ''}`}>
-                    <img src="/icons/game_min.png" className="w-[120px] h-[120px] object-contain" alt="" />
-                </div>
-                <div id="mx_reloj_game_sec" className={`w-[250px] h-[150px] flex items-center justify-center bg-black ${activeClockSelection === 'game_sec' ? 'bg-cyan-900/40' : ''}`}>
-                    <img src="/icons/game_sec.png" className="w-[120px] h-[120px] object-contain" alt="" />
-                </div>
-                <div id="mx_reloj_1424_sec" className={`w-[250px] h-[150px] flex items-center justify-center bg-black ${activeClockSelection === 'shot_sec' ? 'bg-amber-900/40' : ''}`}>
-                    <img src="/icons/shot_clock.png" className="w-[120px] h-[120px] object-contain" alt="" />
-                </div>
-                <div id="mx_dial_click" className="w-[250px] h-[150px] flex items-center justify-center bg-black">
-                    <img src="/icons/dial_reset.png" className="w-[120px] h-[120px] object-contain" alt="" />
-                </div>
+                <div id="mx_reloj_game_min" className={`w-[250px] h-[156px] flex items-center justify-center bg-black ${activeClockSelection === 'game_min' ? 'bg-cyan-900/40' : ''}`}><img src="/icons/game_min.png" className="w-[120px] h-[120px] object-contain" /></div>
+                <div id="mx_reloj_game_sec" className={`w-[250px] h-[156px] flex items-center justify-center bg-black ${activeClockSelection === 'game_sec' ? 'bg-cyan-900/40' : ''}`}><img src="/icons/game_sec.png" className="w-[120px] h-[120px] object-contain" /></div>
+                <div id="mx_reloj_1424_sec" className={`w-[250px] h-[156px] flex items-center justify-center bg-black ${activeClockSelection === 'shot_sec' ? 'bg-amber-900/40' : ''}`}><img src="/icons/shot_clock.png" className="w-[120px] h-[120px] object-contain" /></div>
+                <div id="mx_dial_click" className="w-[250px] h-[156px] flex items-center justify-center bg-black"><img src="/icons/dial_reset.png" className="w-[120px] h-[120px] object-contain" /></div>
             </div>
 
             <style jsx global>{`
