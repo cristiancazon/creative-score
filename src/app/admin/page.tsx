@@ -5,7 +5,7 @@ import { directus } from '@/lib/directus';
 import { readItems } from '@directus/sdk';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Video } from 'lucide-react';
+import { Video, Download } from 'lucide-react';
 
 export default function AdminDashboard() {
     const [stats, setStats] = useState({ matches: 0, live: 0, teams: 0 });
@@ -173,6 +173,15 @@ export default function AdminDashboard() {
                             <div className="text-left">
                                 <p className="text-sm font-bold">Deploy Ad</p>
                                 <p className="text-[11px] text-slate-500 dark:text-slate-400">Publish media to displays</p>
+                            </div>
+                        </a>
+                        <a href="/downloads/CreativeScoreMX.lplug4" download className="w-full flex items-center gap-4 p-4 rounded-2xl bg-emerald-500/10 dark:bg-emerald-900/20 hover:bg-emerald-500/20 dark:hover:bg-emerald-800/20 hover:-translate-y-1 transition-all group border border-emerald-500/20">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white dark:group-hover:text-slate-900 transition-colors">
+                                <Download size={24} />
+                            </div>
+                            <div className="text-left">
+                                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-400">Download MX Plugin</p>
+                                <p className="text-[11px] text-emerald-600/70 dark:text-emerald-400/60">Get latest version (v1.1.0)</p>
                             </div>
                         </a>
                     </div>
