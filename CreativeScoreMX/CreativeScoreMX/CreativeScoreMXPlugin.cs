@@ -2,21 +2,17 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using Loupedeck.CreativeScoreMX.Commands;
+using Loupedeck;
 
 namespace Loupedeck.CreativeScoreMX
 {
     public class CreativeScoreMXPlugin : Plugin
     {
-        // Thread-safe dictionary to store the latest base64 image coming from the Next.js app
         public ConcurrentDictionary<string, string> ActionImages { get; } = new ConcurrentDictionary<string, string>();
 
         public override void Load()
         {
-            // Subscribe to WS messages from the web app
             WebSocketServerManager.Instance.OnMessageReceived += this.OnWebSocketMessage;
-
-            // Start WS Server
             WebSocketServerManager.Instance.Start();
         }
 
@@ -31,7 +27,6 @@ namespace Loupedeck.CreativeScoreMX
             try
             {
                 var payload = JsonConvert.DeserializeObject<WsPayload>(message);
-                
                 if (payload?.type == "UPDATE_IMAGES" && payload.keys != null)
                 {
                     bool wasUpdated = false;
@@ -46,10 +41,7 @@ namespace Loupedeck.CreativeScoreMX
 
                     if (wasUpdated)
                     {
-                        // Tell Loupedeck to redraw all action keys
                         this.OnPluginStatusChanged(Loupedeck.PluginStatus.Normal, "Images Updated");
-                        
-                        // Action images require telling specific commands to refresh their UI
                         foreach (var keyData in payload.keys)
                         {
                             this.OnActionImageChanged(keyData.id, null);
@@ -59,13 +51,46 @@ namespace Loupedeck.CreativeScoreMX
             }
             catch (Exception ex)
             {
-                // Ignore parsing errors
-                Console.WriteLine("Failed to parse WS message in CreativeScoreMX plugin: " + ex.Message);
+                Console.WriteLine("Failed to parse WS message: " + ex.Message);
             }
         }
     }
 
-    // Helper classes for parsing incoming JSON from Next.js
+    // consolidated Adjustments
+    public class WheelMenuAdjustment : PluginDynamicAdjustment
+    {
+        public WheelMenuAdjustment() : base(false)
+        {
+            this.DisplayName = "Control Menu Wheel";
+            this.GroupName = "MX Clock Controls";
+            this.Description = "Girar rueda para navegar menú de edición de reloj";
+        }
+
+        protected override void ApplyAdjustment(string actionParameter, int diff)
+        {
+            string actionId = diff > 0 ? "wheel_up" : "wheel_down";
+            var message = $"{{\"event\":\"keyDown\",\"actionId\":\"{actionId}\"}}";
+            WebSocketServerManager.Instance.BroadcastMessage(message);
+        }
+    }
+
+    public class DialClockAdjustment : PluginDynamicAdjustment
+    {
+        public DialClockAdjustment() : base(false)
+        {
+            this.DisplayName = "Control Clock Dial";
+            this.GroupName = "MX Clock Controls";
+            this.Description = "Girar dial para sumar o restar tiempo al reloj";
+        }
+
+        protected override void ApplyAdjustment(string actionParameter, int diff)
+        {
+            string actionId = diff > 0 ? "dial_right" : "dial_left";
+            var message = $"{{\"event\":\"keyDown\",\"actionId\":\"{actionId}\"}}";
+            WebSocketServerManager.Instance.BroadcastMessage(message);
+        }
+    }
+
     public class WsPayload
     {
         public string type { get; set; }
