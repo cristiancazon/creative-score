@@ -1,4 +1,5 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 // General Information about an assembly is controlled through the following
@@ -7,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("CreativeScoreMX")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("XeroxDev")]
-[assembly: AssemblyProduct("Loupedeck2")]
-[assembly: AssemblyCopyright("Copyright (c) 2021 XeroxDev. All rights reserved.")]
+[assembly: AssemblyCompany("")]
+[assembly: AssemblyProduct("CreativeScoreMX")]
+[assembly: AssemblyCopyright("Copyright ©  2024")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -19,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("A085DA5C-1D14-43B8-B277-D5408FC53654")]
+[assembly: Guid("9a8f46e5-2964-4e3f-8015-4ba8f89e13d6")]
 
 // Version information for an assembly consists of the following four values:
 //
@@ -30,4 +31,6 @@ using System.Runtime.InteropServices;
 //
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
-[assembly: AssemblyVersion("1.1.0")]
+// [assembly: AssemblyVersion("1.0.*")]
+[assembly: AssemblyVersion("1.1.1")]
+[assembly: AssemblyFileVersion("1.1.1")]

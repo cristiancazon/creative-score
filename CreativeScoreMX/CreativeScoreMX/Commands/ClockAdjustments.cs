@@ -5,7 +5,7 @@ namespace Loupedeck.CreativeScoreMX.Commands
     // Maneja la rueda vertical (Wheel) para navegar por el menú
     public class WheelMenuAdjustment : PluginDynamicAdjustment
     {
-        public WheelMenuAdjustment() : base(true)
+        public WheelMenuAdjustment() : base(false)
         {
             this.DisplayName = "Control Menu Wheel";
             this.GroupName = "MX Clock Controls";
@@ -26,7 +26,7 @@ namespace Loupedeck.CreativeScoreMX.Commands
     // Maneja el dial central para sumar o restar tiempo
     public class DialClockAdjustment : PluginDynamicAdjustment
     {
-        public DialClockAdjustment() : base(true)
+        public DialClockAdjustment() : base(false)
         {
             this.DisplayName = "Control Clock Dial";
             this.GroupName = "MX Clock Controls";

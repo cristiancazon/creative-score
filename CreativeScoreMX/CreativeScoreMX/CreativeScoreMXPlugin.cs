@@ -50,7 +50,6 @@ namespace Loupedeck.CreativeScoreMX
                         this.OnPluginStatusChanged(Loupedeck.PluginStatus.Normal, "Images Updated");
                         
                         // Action images require telling specific commands to refresh their UI
-                        // This triggers the GetCommandImage() method in our GridCommand
                         foreach (var keyData in payload.keys)
                         {
                             this.OnActionImageChanged(keyData.id, null);
@@ -63,14 +62,6 @@ namespace Loupedeck.CreativeScoreMX
                 // Ignore parsing errors
                 Console.WriteLine("Failed to parse WS message in CreativeScoreMX plugin: " + ex.Message);
             }
-        }
-
-        public override void RunCommand(string commandName, string parameter)
-        {
-        }
-
-        public override void ApplyAdjustment(string adjustmentName, string parameter, int diff)
-        {
         }
     }
 
