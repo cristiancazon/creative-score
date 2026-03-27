@@ -191,7 +191,11 @@ export default function ControlMXPage() {
                     setHomePlayers(playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === homeTeamId).sort((a,b)=>a.number-b.number));
                     setAwayPlayers(playersData.filter((p: any) => (typeof p.team === 'object' ? p.team.id : p.team) === awayTeamId).sort((a,b)=>a.number-b.number));
                 }
-            } catch (err) {}
+            } catch (err) {
+                console.error("Fetch error:", err);
+            } finally {
+                setLoading(false);
+            }
         };
         fetchData();
         const interval = setInterval(fetchData, 2000);
@@ -235,7 +239,11 @@ export default function ControlMXPage() {
     };
     const handleGridAction = (index: number) => {
         if (view === 'main') {
-            if (index < 5) { const p = getOnCourt()[index]; if (p) { setActivePlayer(p); setView('actions'); } }
+            const currentOnCourt = getOnCourt();
+            if (index < 5 && currentOnCourt[index]) { 
+                setActivePlayer(currentOnCourt[index]); 
+                setView('actions'); 
+            }
             else if (index === 5) {} // TO
             else if (index === 6) toggleTimer();
             else if (index === 7) resetShotClock(14);
@@ -250,8 +258,12 @@ export default function ControlMXPage() {
         return (onCourt.length > 0 ? onCourt : teamPlayers.slice(0, 5)).sort((a,b)=>a.number-b.number).slice(0,5);
     };
 
-    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white">Loading...</div>;
-    if (!match) return <div>No match found.</div>;
+    if (loading) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono gap-3">
+        <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
+        <span>CARGANDO SCOREBOARD...</span>
+    </div>;
+    
+    if (!match) return <div className="min-h-screen bg-black flex items-center justify-center text-white">No se encontró el partido o hubo un error de conexión.</div>;
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient relative">
