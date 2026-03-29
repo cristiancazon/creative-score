@@ -75,6 +75,11 @@ namespace Loupedeck.CreativeScoreMX
         {
             return Helper.LoadIconOrFallback("reloj_min.png", imageSize, "MIN");
         }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
+        }
     }
 
     public class RelojGameSecButton : PluginDynamicCommand
@@ -93,6 +98,11 @@ namespace Loupedeck.CreativeScoreMX
         protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
         {
             return Helper.LoadIconOrFallback("reloj_sec.png", imageSize, "SEC");
+        }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
         }
     }
 
@@ -113,6 +123,11 @@ namespace Loupedeck.CreativeScoreMX
         {
             return Helper.LoadIconOrFallback("reloj_1424_sec.png", imageSize, "24 SEC");
         }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
+        }
     }
 
     public class Reloj1424DecButton : PluginDynamicCommand
@@ -131,6 +146,11 @@ namespace Loupedeck.CreativeScoreMX
         protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
         {
             return Helper.LoadIconOrFallback("reloj_1424_dec.png", imageSize, "24 DEC");
+        }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
         }
     }
 
@@ -161,6 +181,11 @@ namespace Loupedeck.CreativeScoreMX
         protected override BitmapImage GetAdjustmentImage(string actionParameter, PluginImageSize imageSize)
         {
             return Helper.LoadIconOrFallback("reloj_dial.png", imageSize, "DIAL");
+        }
+
+        protected override string GetAdjustmentDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
         }
     }
 
