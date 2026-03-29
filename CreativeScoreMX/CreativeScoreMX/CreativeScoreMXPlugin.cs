@@ -70,6 +70,11 @@ namespace Loupedeck.CreativeScoreMX
             var message = "{\"event\":\"keyDown\",\"actionId\":\"mx_reloj_game_min\"}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
         }
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_min.png", imageSize, "MIN");
+        }
     }
 
     public class RelojGameSecButton : PluginDynamicCommand
@@ -83,6 +88,11 @@ namespace Loupedeck.CreativeScoreMX
         {
             var message = "{\"event\":\"keyDown\",\"actionId\":\"mx_reloj_game_sec\"}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
+        }
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_sec.png", imageSize, "SEC");
         }
     }
 
@@ -98,6 +108,11 @@ namespace Loupedeck.CreativeScoreMX
             var message = "{\"event\":\"keyDown\",\"actionId\":\"mx_reloj_1424_sec\"}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
         }
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_1424_sec.png", imageSize, "24 SEC");
+        }
     }
 
     public class Reloj1424DecButton : PluginDynamicCommand
@@ -111,6 +126,11 @@ namespace Loupedeck.CreativeScoreMX
         {
             var message = "{\"event\":\"keyDown\",\"actionId\":\"mx_reloj_1424_dec\"}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
+        }
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_1424_dec.png", imageSize, "24 DEC");
         }
     }
 
@@ -137,6 +157,11 @@ namespace Loupedeck.CreativeScoreMX
         }
 
         protected override string GetAdjustmentValue(string actionParameter) => "";
+
+        protected override BitmapImage GetAdjustmentImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_dial.png", imageSize, "DIAL");
+        }
     }
 
     // Helper classes
@@ -150,5 +175,34 @@ namespace Loupedeck.CreativeScoreMX
     {
         public string id { get; set; }
         public string image { get; set; }
+    }
+
+    public static class Helper
+    {
+        public static BitmapImage LoadIconOrFallback(string resourceName, PluginImageSize imageSize, string fallbackText)
+        {
+            try
+            {
+                var assembly = System.Reflection.Assembly.GetExecutingAssembly();
+                var resourcePath = $"Loupedeck.CreativeScoreMX.Resources.{resourceName}";
+                using (var stream = assembly.GetManifestResourceStream(resourcePath))
+                {
+                    if (stream != null)
+                    {
+                        var buffer = new byte[stream.Length];
+                        stream.Read(buffer, 0, buffer.Length);
+                        return BitmapImage.FromArray(buffer);
+                    }
+                }
+            }
+            catch { /* fallback on error */ }
+
+            using (var bitmapBuilder = new BitmapBuilder(imageSize))
+            {
+                bitmapBuilder.Clear(BitmapColor.Black);
+                bitmapBuilder.DrawText(fallbackText);
+                return bitmapBuilder.ToImage();
+            }
+        }
     }
 }
