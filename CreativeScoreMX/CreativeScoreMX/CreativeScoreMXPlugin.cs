@@ -56,11 +56,11 @@ namespace Loupedeck.CreativeScoreMX
         }
     }
 
-    // --- SELECTION BUTTONS (Fixed IDs) ---
+    // --- SELECTION BUTTONS ---
     
     public class RelojGameMinButton : PluginDynamicCommand
     {
-        public RelojGameMinButton() : base("mx_reloj_game_min", "Reloj Principal: Minutos", "MX Clock Controls")
+        public RelojGameMinButton() : base("mx_reloj_game_min", "Reloj Principal: Minutos", "MX Smart Clock")
         {
             this.Description = "Pulsa para activar/desactivar la edición de Minutos del Reloj de Juego";
         }
@@ -74,7 +74,7 @@ namespace Loupedeck.CreativeScoreMX
 
     public class RelojGameSecButton : PluginDynamicCommand
     {
-        public RelojGameSecButton() : base("mx_reloj_game_sec", "Reloj Principal: Segundos", "MX Clock Controls")
+        public RelojGameSecButton() : base("mx_reloj_game_sec", "Reloj Principal: Segundos", "MX Smart Clock")
         {
             this.Description = "Pulsa para activar/desactivar la edición de Segundos del Reloj de Juego";
         }
@@ -88,7 +88,7 @@ namespace Loupedeck.CreativeScoreMX
 
     public class Reloj1424SecButton : PluginDynamicCommand
     {
-        public Reloj1424SecButton() : base("mx_reloj_1424_sec", "Reloj 14/24: Segundos", "MX Clock Controls")
+        public Reloj1424SecButton() : base("mx_reloj_1424_sec", "Reloj 14/24: Segundos", "MX Smart Clock")
         {
             this.Description = "Pulsa para activar/desactivar la edición del Reloj de Posesión (14/24)";
         }
@@ -100,13 +100,27 @@ namespace Loupedeck.CreativeScoreMX
         }
     }
 
-    // --- SMART ADJUSTMENTS (DIAL & WHEEL) ---
+    public class Reloj1424DecButton : PluginDynamicCommand
+    {
+        public Reloj1424DecButton() : base("mx_reloj_1424_dec", "Reloj 14/24: Décimas", "MX Smart Clock")
+        {
+            this.Description = "Pulsa para activar/desactivar la edición de Décimas del Reloj de Posesión (14/24)";
+        }
+
+        protected override void RunCommand(string actionParameter)
+        {
+            var message = "{\"event\":\"keyDown\",\"actionId\":\"mx_reloj_1424_dec\"}";
+            WebSocketServerManager.Instance.BroadcastMessage(message);
+        }
+    }
+
+    // --- SMART DIAL ADJUSTMENT ---
 
     public class DialClockAdjustment : PluginDynamicAdjustment
     {
-        public DialClockAdjustment() : base("Control_Clock_Dial", "Control Clock Dial", "MX Clock Controls", true)
+        public DialClockAdjustment() : base("Control_Clock_Dial", "Control Clock Dial", "MX Smart Clock", true)
         {
-            this.Description = "Girar para ajustar el valor del reloj seleccionado actualmente";
+            this.Description = "Girar para ajustar el valor del reloj seleccionado actualmente. Pulsar para desactivar selección.";
         }
 
         protected override void ApplyAdjustment(string actionParameter, int diff)
@@ -116,31 +130,10 @@ namespace Loupedeck.CreativeScoreMX
             WebSocketServerManager.Instance.BroadcastMessage(message);
         }
 
-        protected override PluginParameter[] GetParameters()
+        protected override void RunCommand(string actionParameter)
         {
-            return new[] { new PluginParameter("default", "Ajuste de Tiempo", "Girar para cambiar") };
-        }
-
-        protected override string GetAdjustmentValue(string actionParameter) => "";
-    }
-
-    public class WheelMenuAdjustment : PluginDynamicAdjustment
-    {
-        public WheelMenuAdjustment() : base("Control_Menu_Wheel", "Control Menu Wheel", "MX Clock Controls", true)
-        {
-            this.Description = "Girar para navegar o ajustar milésimas (futuro)";
-        }
-
-        protected override void ApplyAdjustment(string actionParameter, int diff)
-        {
-            string actionId = diff > 0 ? "wheel_up" : "wheel_down";
-            var message = $"{{\"event\":\"keyDown\",\"actionId\":\"{actionId}\"}}";
+            var message = "{\"event\":\"keyDown\",\"actionId\":\"dial_click\"}";
             WebSocketServerManager.Instance.BroadcastMessage(message);
-        }
-
-        protected override PluginParameter[] GetParameters()
-        {
-            return new[] { new PluginParameter("default", "Rueda Menú", "Navegar") };
         }
 
         protected override string GetAdjustmentValue(string actionParameter) => "";

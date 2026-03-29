@@ -45,8 +45,8 @@ export default function ControlMXPage() {
     const videoAdIndexRef = useRef(0);
 
     // Clock Edit State & Refs for WebSocket
-    const [activeClockSelection, setActiveClockSelection] = useState<'game_min' | 'game_sec' | 'shot_sec' | null>(null);
-    const activeClockSelectionRef = useRef<'game_min' | 'game_sec' | 'shot_sec' | null>(null);
+    const [activeClockSelection, setActiveClockSelection] = useState<'game_min' | 'game_sec' | 'shot_sec' | 'shot_dec' | null>(null);
+    const activeClockSelectionRef = useRef<'game_min' | 'game_sec' | 'shot_sec' | 'shot_dec' | null>(null);
     const matchRef = useRef<Match | null>(null);
     const rotationAccumulatorRef = useRef<number>(0);
 
@@ -126,6 +126,8 @@ export default function ControlMXPage() {
                 setActiveClockSelection(prev => prev === 'game_sec' ? null : 'game_sec');
             } else if (actionId === 'mx_reloj_1424_sec') {
                 setActiveClockSelection(prev => prev === 'shot_sec' ? null : 'shot_sec');
+            } else if (actionId === 'mx_reloj_1424_dec') {
+                setActiveClockSelection(prev => prev === 'shot_dec' ? null : 'shot_dec');
             }
 
             // Dial click resets selection
@@ -147,6 +149,7 @@ export default function ControlMXPage() {
                         if (mode === 'game_min') handleClockAdjustment('minutos', finalDir);
                         else if (mode === 'game_sec') handleClockAdjustment('segundos', finalDir);
                         else if (mode === 'shot_sec') handleClockAdjustment('posesion', finalDir);
+                        else if (mode === 'shot_dec') handleClockAdjustment('posesion_dec', finalDir);
                     }
                 }
             }
@@ -232,7 +235,7 @@ export default function ControlMXPage() {
         return () => clearInterval(interval);
     }, [match]);
 
-    const handleClockAdjustment = (option: 'minutos' | 'segundos' | 'posesion', amount: number) => {
+    const handleClockAdjustment = (option: 'minutos' | 'segundos' | 'posesion' | 'posesion_dec', amount: number) => {
         if (!matchRef.current) return;
         const currentMatch = matchRef.current;
         let newTimer = currentMatch.timer_seconds;
@@ -242,6 +245,10 @@ export default function ControlMXPage() {
         else if (option === 'posesion') {
             const currentSc = currentMatch.gamestate?.shot_clock?.seconds ?? 24;
             newGamestate.shot_clock = { seconds: Math.max(0, currentSc + amount), started_at: null };
+        }
+        else if (option === 'posesion_dec') {
+            const currentSc = currentMatch.gamestate?.shot_clock?.seconds ?? 24;
+            newGamestate.shot_clock = { seconds: Math.max(0, Math.round((currentSc + (amount * 0.1)) * 10) / 10), started_at: null };
         }
         setLocalTimer(newTimer);
         setMatch(prev => prev ? ({ ...prev, timer_seconds: newTimer, gamestate: newGamestate }) : null);
@@ -261,8 +268,8 @@ export default function ControlMXPage() {
             : { status: 'live', timer_started_at: nowIso };
         
         if (isRunning && match.gamestate?.shot_clock?.started_at) {
-            const scElapsed = Math.floor((new Date().getTime() - new Date(match.gamestate.shot_clock.started_at).getTime())/1000);
-            updateObj.gamestate = { ...match.gamestate, shot_clock: { seconds: Math.max(0, match.gamestate.shot_clock.seconds - scElapsed), started_at: null } };
+            const scElapsedMs = new Date().getTime() - new Date(match.gamestate.shot_clock.started_at).getTime();
+            updateObj.gamestate = { ...match.gamestate, shot_clock: { seconds: Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs/1000)), started_at: null } };
         } else if (!isRunning && match.gamestate?.shot_clock?.seconds !== undefined && !match.gamestate.shot_clock.started_at) {
             updateObj.gamestate = { ...match.gamestate, shot_clock: { ...match.gamestate.shot_clock, started_at: nowIso } };
         }
@@ -384,7 +391,7 @@ export default function ControlMXPage() {
                     </h1>
                 </div>
                 <div className="flex gap-4 items-center">
-                    <div className={`flex flex-col items-center bg-white/5 border px-4 py-2 rounded-2xl ${activeClockSelection==='shot_sec' ? 'border-amber-500' : 'border-white/10'}`}>
+                    <div className={`flex flex-col items-center bg-white/5 border px-4 py-2 rounded-2xl ${activeClockSelection==='shot_sec' || activeClockSelection==='shot_dec' ? 'border-amber-500' : 'border-white/10'}`}>
                         <span className="text-[10px] text-amber-500 font-bold tracking-widest">SHOT</span>
                         <span className="text-3xl font-mono font-black italic text-amber-500 leading-none">{shotClockDisplay}</span>
                     </div>
