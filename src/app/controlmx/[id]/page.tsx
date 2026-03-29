@@ -36,6 +36,7 @@ export default function ControlMXPage() {
     const [view, setView] = useState<ViewState>('main');
     const [activePlayer, setActivePlayer] = useState<any | null>(null);
     const [localTimer, setLocalTimer] = useState(0);
+    const [localShotClock, setLocalShotClock] = useState<number | null>(null);
 
     // Ads State
     const [textAds, setTextAds] = useState<any[]>([]);
@@ -207,12 +208,27 @@ export default function ControlMXPage() {
         const update = () => {
             if (!match) return;
             if (match.status === 'live' && match.timer_started_at) {
-                const elapsed = Math.floor((new Date().getTime() - new Date(match.timer_started_at).getTime()) / 1000);
-                setLocalTimer(Math.max(0, match.timer_seconds - elapsed));
-            } else setLocalTimer(match.timer_seconds);
+                const now = new Date().getTime();
+                const elapsedMs = now - new Date(match.timer_started_at).getTime();
+                setLocalTimer(Math.max(0, match.timer_seconds - (elapsedMs / 1000)));
+                
+                // Shot Clock Sync
+                if (match?.gamestate?.shot_clock?.started_at && match?.gamestate?.shot_clock?.seconds !== undefined) {
+                    const scStartedAt = new Date(match.gamestate.shot_clock.started_at).getTime();
+                    const scElapsedMs = now - scStartedAt;
+                    setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs / 1000)));
+                } else {
+                    if (match?.gamestate?.shot_clock?.seconds !== undefined) setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
+                }
+            } else {
+                setLocalTimer(match.timer_seconds);
+                if (match?.gamestate?.shot_clock?.seconds !== undefined) {
+                    setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
+                } else setLocalShotClock(null);
+            }
         };
         update();
-        const interval = setInterval(update, 200);
+        const interval = setInterval(update, 100);
         return () => clearInterval(interval);
     }, [match]);
 
@@ -350,7 +366,8 @@ export default function ControlMXPage() {
     const onCourt = getOnCourt();
     const bench = getBench();
     const isRunning = match.status === 'live';
-    const shotClockValue = match.gamestate?.shot_clock?.seconds ?? 24;
+    const shotClockValRaw = localShotClock ?? match.gamestate?.shot_clock?.seconds ?? 24;
+    const shotClockDisplay = (shotClockValRaw < 5 && shotClockValRaw > 0) ? shotClockValRaw.toFixed(1) : Math.ceil(shotClockValRaw).toString();
 
     return (
         <main className="min-h-screen bg-[#0a0a0a] text-white flex flex-col p-6 font-sans select-none overflow-hidden radial-gradient relative">
@@ -369,13 +386,23 @@ export default function ControlMXPage() {
                 <div className="flex gap-4 items-center">
                     <div className={`flex flex-col items-center bg-white/5 border px-4 py-2 rounded-2xl ${activeClockSelection==='shot_sec' ? 'border-amber-500' : 'border-white/10'}`}>
                         <span className="text-[10px] text-amber-500 font-bold tracking-widest">SHOT</span>
-                        <span className="text-3xl font-mono font-black italic text-amber-500 leading-none">{shotClockValue}</span>
+                        <span className="text-3xl font-mono font-black italic text-amber-500 leading-none">{shotClockDisplay}</span>
                     </div>
                     <div className={`text-4xl font-mono font-black italic flex items-center gap-3 bg-white/5 px-4 py-2 rounded-2xl border ${activeClockSelection ? 'border-cyan-500' : 'border-white/10'}`}>
                         <span className={`w-3 h-3 rounded-full ${isRunning ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        <span className={activeClockSelection === 'game_min' ? 'text-cyan-400' : ''}>{Math.floor(localTimer/60).toString().padStart(2,'0')}</span>
-                        <span className="opacity-30">:</span>
-                        <span className={activeClockSelection === 'game_sec' ? 'text-cyan-400' : ''}>{(localTimer%60).toString().padStart(2,'0')}</span>
+                        {localTimer >= 60 || localTimer === 0 ? (
+                            <>
+                                <span className={activeClockSelection === 'game_min' ? 'text-cyan-400' : ''}>{Math.floor(localTimer/60).toString().padStart(2,'0')}</span>
+                                <span className="opacity-30">:</span>
+                                <span className={activeClockSelection === 'game_sec' ? 'text-cyan-400' : ''}>{Math.floor(localTimer%60).toString().padStart(2,'0')}</span>
+                            </>
+                        ) : (
+                            <>
+                                <span className={activeClockSelection === 'game_sec' ? 'text-cyan-400' : 'text-red-400'}>{Math.floor(localTimer).toString().padStart(2, '0')}</span>
+                                <span className="opacity-30 text-red-500">.</span>
+                                <span className="text-red-400">{Math.floor((localTimer % 1) * 10).toString()}</span>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

@@ -57,9 +57,9 @@ export default function BoardPage() {
                 const now = new Date().getTime();
                 // @ts-ignore
                 const startedAt = new Date(match.timer_started_at).getTime();
-                const elapsed = Math.floor((now - startedAt) / 1000);
+                const elapsedMs = now - startedAt;
                 // @ts-ignore
-                setLocalTimer(Math.max(0, match.timer_seconds - elapsed));
+                setLocalTimer(Math.max(0, match.timer_seconds - (elapsedMs / 1000)));
                 
                 // Shot Clock Live Sync
                 // @ts-ignore
@@ -84,7 +84,7 @@ export default function BoardPage() {
         };
 
         updateTimer();
-        const interval = setInterval(updateTimer, 200);
+        const interval = setInterval(updateTimer, 100);
         return () => clearInterval(interval);
     }, [match]);
 
@@ -377,8 +377,9 @@ export default function BoardPage() {
 
     // Timer Display Logic
     const formatTime = (seconds: number) => {
+        if (seconds < 60 && seconds > 0) return Math.abs(seconds).toFixed(1);
         const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
+        const s = Math.floor(seconds % 60);
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
@@ -481,7 +482,11 @@ export default function BoardPage() {
                                 if (match.status === 'paused') extraStyle = { opacity: 0.5 };
                                 break;
                             case 'shot_clock':
-                                content = shotClock !== null ? shotClock : '';
+                                if (shotClock !== null) {
+                                    content = (shotClock < 5 && shotClock > 0) ? shotClock.toFixed(1) : Math.ceil(shotClock).toString();
+                                } else {
+                                    content = '';
+                                }
                                 if (match.status === 'paused') extraStyle = { opacity: 0.5 };
                                 break;
                             case 'period':
