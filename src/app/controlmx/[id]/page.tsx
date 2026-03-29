@@ -291,9 +291,20 @@ export default function ControlMXPage() {
         const playerStats = currentStats[activePlayer.id] || { points: 0, fouls: 0 };
         const isHome = selectedTeam === 'home';
         const scoreField = isHome ? 'home_score' : 'away_score';
-        const updatedStats = { ...currentStats, [activePlayer.id]: { points: Math.max(0, playerStats.points + (type === 'pts' ? value : 0)), fouls: Math.max(0, playerStats.fouls + (type === 'foul' ? value : 0)) } };
+        
+        // Calculate new values with limits
+        let newFouls = playerStats.fouls + (type === 'foul' ? value : 0);
+        newFouls = Math.max(0, Math.min(newFouls, 5)); // Cap player fouls at 5
+        
+        const updatedStats = { ...currentStats, [activePlayer.id]: { points: Math.max(0, playerStats.points + (type === 'pts' ? value : 0)), fouls: newFouls } };
         const newScore = Math.max(0, (Number((match as any)[scoreField]) || 0) + (type === 'pts' ? value : 0));
-        const newGamestate = { ...match.gamestate, player_stats: updatedStats };
+        
+        const foulField = isHome ? 'home_fouls' : 'away_fouls';
+        const currentTeamFouls = Number(match.gamestate?.[foulField]) || 0;
+        let newTeamFouls = currentTeamFouls + (type === 'foul' ? value : 0);
+        newTeamFouls = Math.max(0, Math.min(newTeamFouls, 5)); // Cap team fouls at 5
+
+        const newGamestate = { ...match.gamestate, player_stats: updatedStats, [foulField]: newTeamFouls };
         setMatch(prev => ({ ...prev!, [scoreField]: newScore, gamestate: newGamestate }));
         try {
             await directus.request(updateItem('matches', match.id, { [scoreField]: newScore, gamestate: newGamestate }));

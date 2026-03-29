@@ -224,7 +224,7 @@ export default function ControlPage() {
             const pLen = match.period_length || 10;
             const otLen = match.overtime_length || 5;
             const newSeconds = (nextPeriod > maxPeriods ? otLen : pLen) * 60;
-            const newGamestate = { ...gamestate, is_et: false, home_timeouts: 0, away_timeouts: 0 };
+            const newGamestate = { ...gamestate, is_et: false, home_timeouts: 0, away_timeouts: 0, home_fouls: 0, away_fouls: 0 };
 
             await directus.request(updateItem('matches', match.id, {
                 status: 'paused',
@@ -341,7 +341,9 @@ export default function ControlPage() {
             home_on_court: [],
             away_on_court: [],
             home_fouls: 0,
-            away_fouls: 0
+            away_fouls: 0,
+            home_timeouts: 0,
+            away_timeouts: 0
         };
 
         const resetData = {
@@ -374,7 +376,7 @@ export default function ControlPage() {
         const otLen = match.overtime_length || 5;
         
         const newPeriodDuration = newPeriod > maxPeriods ? otLen : pLen;
-        const newGamestate = { ...match.gamestate, home_timeouts: 0, away_timeouts: 0 };
+        const newGamestate = { ...match.gamestate, home_timeouts: 0, away_timeouts: 0, home_fouls: 0, away_fouls: 0 };
 
         setPeriodDuration(newPeriodDuration);
         setMatch(prev => ({ ...prev!, current_period: newPeriod, gamestate: newGamestate }));
@@ -450,6 +452,7 @@ export default function ControlPage() {
             newPoints = Math.max(0, playerStats.points + value); // Prevent negative
         } else if (type === 'foul') {
             newFouls = Math.max(0, playerStats.fouls + value);
+            newFouls = Math.min(newFouls, 5); // Cap player fouls at 5
         }
 
         // 2. Update Global Match Stats (Score / Team Fouls)
@@ -464,7 +467,8 @@ export default function ControlPage() {
         const newTeamScore = Math.max(0, currentScore + (type === 'pts' ? value : 0));
         // @ts-ignore
         const currentTeamFouls = Number(match.gamestate?.[foulField]) || 0;
-        const newTeamFouls = Math.max(0, currentTeamFouls + (type === 'foul' ? value : 0));
+        let newTeamFouls = Math.max(0, currentTeamFouls + (type === 'foul' ? value : 0));
+        newTeamFouls = Math.min(newTeamFouls, 5); // Cap team fouls at 5
 
         // 3. Play-By-Play Logging (Events)
         // If it's a positive number, we add it. If negative, we try to pop the last event of that type.
