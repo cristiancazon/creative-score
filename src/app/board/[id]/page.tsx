@@ -66,9 +66,9 @@ export default function BoardPage() {
                 if (match?.gamestate?.shot_clock?.started_at && match?.gamestate?.shot_clock?.seconds !== undefined) {
                     // @ts-ignore
                     const scStartedAt = new Date(match.gamestate.shot_clock.started_at).getTime();
-                    const scElapsed = Math.floor((now - scStartedAt) / 1000);
+                    const scElapsedMs = now - scStartedAt;
                     // @ts-ignore
-                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds - scElapsed));
+                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs / 1000)));
                 }
             } else {
                 // @ts-ignore
