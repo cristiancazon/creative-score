@@ -53,7 +53,9 @@ export default function MatchesList() {
             home_on_court: [],
             away_on_court: [],
             home_fouls: 0,
-            away_fouls: 0
+            away_fouls: 0,
+            home_timeouts: 0,
+            away_timeouts: 0
         };
 
         const resetData = {
