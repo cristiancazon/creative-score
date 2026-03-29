@@ -124,9 +124,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Resources</div>}
                     {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}
-                    <a href="/downloads/CreativeScoreMX.lplug4" download className={`flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 text-green-400 hover:text-green-300 transition-colors ${!sidebarOpen ? 'justify-center' : ''}`} title="Download Logi Plugin">
+                    <a href="/downloads/CreativeScoreMX_v1.2.0.lplug4" download className={`flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-800 text-green-400 hover:text-green-300 transition-colors ${!sidebarOpen ? 'justify-center' : ''}`} title="Download Logi Plugin v1.2.0">
                         <Download size={20} />
-                        {sidebarOpen && <span className="whitespace-nowrap font-semibold">Get MX Plugin</span>}
+                        {sidebarOpen && <span className="whitespace-nowrap font-semibold">Get MX Plugin v1.2.0</span>}
                     </a>
                 </nav>
 
