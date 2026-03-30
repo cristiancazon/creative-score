@@ -187,6 +187,16 @@ namespace Loupedeck.CreativeScoreMX
         {
             return "\u200B";
         }
+
+        protected override BitmapImage GetCommandImage(string actionParameter, PluginImageSize imageSize)
+        {
+            return Helper.LoadIconOrFallback("reloj_dial.png", imageSize, "DIAL");
+        }
+
+        protected override string GetCommandDisplayName(string actionParameter, PluginImageSize imageSize)
+        {
+            return "\u200B";
+        }
     }
 
     // Helper classes
