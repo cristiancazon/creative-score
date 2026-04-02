@@ -304,7 +304,29 @@ export default function ControlMXPage() {
         let newTeamFouls = currentTeamFouls + (type === 'foul' ? value : 0);
         newTeamFouls = Math.max(0, Math.min(newTeamFouls, 5)); // Cap team fouls at 5
 
-        const newGamestate = { ...match.gamestate, player_stats: updatedStats, [foulField]: newTeamFouls };
+        // Construct new events log
+        let updatedEvents = [...(match.gamestate?.events || [])];
+        if (value > 0) {
+            updatedEvents.push({
+                id: Math.random().toString(36).substring(2, 9),
+                type,
+                value,
+                player_id: activePlayer.id,
+                team: isHome ? 'home' : 'away',
+                period: match.current_period || 1,
+                time_remaining: Math.floor(localTimer),
+                timestamp: new Date().toISOString()
+            });
+        } else {
+            // Undo: find last matching event and remove it
+            const idx = updatedEvents.map(e => ({...e})).reverse().findIndex(e => e.player_id === activePlayer.id && e.type === type);
+            if (idx !== -1) {
+                const realIdx = updatedEvents.length - 1 - idx;
+                updatedEvents.splice(realIdx, 1);
+            }
+        }
+
+        const newGamestate = { ...match.gamestate, player_stats: updatedStats, [foulField]: newTeamFouls, events: updatedEvents };
         setMatch(prev => ({ ...prev!, [scoreField]: newScore, gamestate: newGamestate }));
         try {
             await directus.request(updateItem('matches', match.id, { [scoreField]: newScore, gamestate: newGamestate }));
