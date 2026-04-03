@@ -51,7 +51,20 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
     const router = useRouter();
     const [loading, setLoading] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
-    const [activeTab, setActiveTab] = useState<'general' | 'overlay' | 'content' | 'score' | 'elements'>('general');
+    const [activeTab, setActiveTab] = useState<'general' | 'overlay' | 'content' | 'score' | 'elements' | 'json'>('general');
+    const [jsonError, setJsonError] = useState<string | null>(null);
+
+    // ... (keep load logic)
+
+    const handleJsonChange = (val: string) => {
+        try {
+            const parsed = JSON.parse(val);
+            setFormData({ ...formData, config: parsed });
+            setJsonError(null);
+        } catch (e) {
+            setJsonError('Invalid JSON format');
+        }
+    };
     
     const [formData, setFormData] = useState<Partial<ScoringAnimation>>({
         name: 'New Animation',
@@ -223,6 +236,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                         <TabButton id="content" active={activeTab} onClick={setActiveTab} icon={<Info size={14} />} label="Text" />
                         <TabButton id="score" active={activeTab} onClick={setActiveTab} icon={<Zap size={14} />} label="Point" />
                         <TabButton id="elements" active={activeTab} onClick={setActiveTab} icon={<Plus size={14} />} label="FX" />
+                        <TabButton id="json" active={activeTab} onClick={setActiveTab} icon={<Layers size={14} className="text-purple-400" />} label="JSON" />
                     </div>
 
                     <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
@@ -300,6 +314,24 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 elements={config.elements || []} 
                                 onChange={(val: any) => updateConfig('elements', val)} 
                             />
+                        )}
+                        {activeTab === 'json' && (
+                            <div className="space-y-4 h-full flex flex-col">
+                                <div className="flex items-center justify-between">
+                                    <label className="block text-xs font-bold text-gray-500 uppercase">Advanced JSON Editor</label>
+                                    {jsonError && <span className="text-[10px] text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded animate-pulse">{jsonError}</span>}
+                                </div>
+                                <textarea
+                                    value={JSON.stringify(config, null, 2)}
+                                    onChange={(e) => handleJsonChange(e.target.value)}
+                                    className={`flex-1 w-full bg-gray-900 border ${jsonError ? 'border-red-900' : 'border-gray-800'} rounded-lg p-4 text-xs font-mono text-purple-300 focus:outline-none custom-scrollbar min-h-[400px]`}
+                                    spellCheck={false}
+                                />
+                                <div className="p-3 bg-blue-900/10 border border-blue-900/30 rounded flex gap-3 text-xs text-blue-300">
+                                    <Info size={16} className="shrink-0" />
+                                    <p>Aquí puedes pegar configuraciones complejas de Framer Motion. Los cambios reflejan en las otras pestañas.</p>
+                                </div>
+                            </div>
                         )}
                     </div>
                 </div>
