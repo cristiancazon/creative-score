@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { directus } from '@/lib/directus';
 import { updateItem, readItems } from '@directus/sdk';
 import Link from 'next/link';
-import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2, Cpu, Printer, RotateCcw } from 'lucide-react';
+import { Plus, Edit, Trash2, Calendar, Clock, PlayCircle, Monitor, Gamepad2, Cpu, Printer, RotateCcw, Timer } from 'lucide-react';
 import { Match, Team, Sport } from '@/types/directus';
 
 export default function MatchesList() {
@@ -162,6 +162,15 @@ export default function MatchesList() {
                                                 title="Open MX Control"
                                             >
                                                 <Cpu size={18} />
+                                            </Link>
+                                            <div className="w-px h-6 bg-cyan-500/10 mx-1 self-center"></div>
+                                            <Link
+                                                href={`/boardshot/${match.id}`}
+                                                target="_blank"
+                                                className="p-2 hover:bg-cyan-500/10 rounded-xl text-yellow-400 hover:text-yellow-300 transition-all duration-200 hover:shadow-[0_0_10px_rgba(250,204,21,0.2)]"
+                                                title="Open Shot Clock View"
+                                            >
+                                                <Timer size={18} />
                                             </Link>
                                             <div className="w-px h-6 bg-cyan-500/10 mx-1 self-center"></div>
                                             <button
