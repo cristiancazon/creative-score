@@ -69,60 +69,53 @@ export default function BoardShotPage() {
         return () => clearInterval(interval);
     }, [id]);
 
-    // Timer Tick Logic (Same as Board)
+    // Timer Tick Logic (Identical to Main Board)
     useEffect(() => {
         if (!match) return;
 
-        // Parse gamestate if it's a string (Safety for different Directus configs)
-        let gamestate: any = match.gamestate;
-        if (typeof gamestate === 'string') {
-            try {
-                gamestate = JSON.parse(gamestate);
-            } catch (e) {
-                console.error("Failed to parse gamestate JSON:", e);
-                gamestate = {};
-            }
-        }
-
-        if (match.status !== 'live' || !match.timer_started_at) {
-            setLocalTimer(match.timer_seconds || 0);
+        const updateTimer = () => {
+            const now = Date.now();
             
-            // Check gamestate specifically for shot_clock
-            const gsShot = gamestate?.shot_clock;
-            if (gsShot !== undefined && gsShot !== null) {
-                setShotClock(Number(gsShot));
+            // Parse gamestate if it's a string
+            let gs: any = match.gamestate;
+            if (typeof gs === 'string') {
+                try { gs = JSON.parse(gs); } catch (e) { gs = {}; }
+            }
+
+            // Game Clock Logic
+            if (match.status === 'live' && match.timer_started_at) {
+                const startedAt = new Date(match.timer_started_at!).getTime();
+                if (!isNaN(startedAt)) {
+                    const elapsedMs = now - startedAt;
+                    setLocalTimer(Math.max(0, (match.timer_seconds || 0) - (elapsedMs / 1000)));
+                }
+            } else {
+                setLocalTimer(match.timer_seconds || 0);
+            }
+
+            // Shot Clock Logic (Handling nested object structure as seen in /board)
+            const sc = gs?.shot_clock || gs?.shotClock; // Support both cases
+            
+            if (sc && typeof sc === 'object') {
+                if (sc.started_at && match.status === 'live') {
+                    const scStartedAt = new Date(sc.started_at).getTime();
+                    if (!isNaN(scStartedAt)) {
+                        const scElapsedMs = now - scStartedAt;
+                        setShotClock(Math.max(0, (sc.seconds || 0) - (scElapsedMs / 1000)));
+                    }
+                } else {
+                    setShotClock(Math.max(0, sc.seconds || 0));
+                }
+            } else if (typeof sc === 'number') {
+                setShotClock(sc);
             } else {
                 setShotClock(null);
             }
-            return;
-        }
-
-        const tick = () => {
-            const now = Date.now();
-            const startedAt = new Date(match.timer_started_at!).getTime();
-            if (isNaN(startedAt)) return;
-
-            const elapsed = (now - startedAt) / 1000;
-            
-            const newTime = Math.max(0, (match.timer_seconds || 0) - elapsed);
-            setLocalTimer(newTime);
-            
-            // Recalculate gamestate from current match ref
-            let innerGs: any = match.gamestate;
-            if (typeof innerGs === 'string') {
-                try { innerGs = JSON.parse(innerGs); } catch (e) { innerGs = {}; }
-            }
-
-            const gsShot = innerGs?.shot_clock;
-            if (gsShot !== undefined && gsShot !== null) {
-                const newShotClock = Math.max(0, Number(gsShot) - elapsed);
-                setShotClock(newShotClock);
-            }
         };
 
-        const timerId = setInterval(tick, 100);
+        const timerId = setInterval(updateTimer, 100);
         return () => clearInterval(timerId);
-    }, [match?.status, match?.timer_seconds, match?.timer_started_at, match?.gamestate]);
+    }, [match]);
 
     // Enhanced logging for debugging
     useEffect(() => {
@@ -131,9 +124,9 @@ export default function BoardShotPage() {
             if (typeof gs === 'string') {
                 try { gs = JSON.parse(gs); } catch (e) {}
             }
-            console.log("[DEBUG] Match Sync:", {
+            console.log("[DEBUG] Match Sync (BoardShot):", {
                 timer: match.timer_seconds,
-                shotClock: gs?.shot_clock,
+                sc_data: gs?.shot_clock || gs?.shotClock,
                 status: match.status
             });
         }
