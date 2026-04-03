@@ -5,7 +5,7 @@ import { directus } from '@/lib/directus';
 import { useRouter, usePathname } from 'next/navigation';
 import { readMe } from '@directus/sdk';
 import Link from 'next/link';
-import { LayoutDashboard, Users, Trophy, Flag, LogOut, Swords, ChevronLeft, ChevronRight, Moon, Sun, Monitor, MessageSquare, Video, Download } from 'lucide-react';
+import { LayoutDashboard, Users, Trophy, Flag, LogOut, Swords, ChevronLeft, ChevronRight, Moon, Sun, Monitor, MessageSquare, Video, Download, Zap } from 'lucide-react';
 import { Lexend } from 'next/font/google';
 import './admin.css';
 
@@ -121,6 +121,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                     <NavItem href="/admin/text-ads" icon={<MessageSquare size={20} />} label="Text Ads" isOpen={sidebarOpen} />
                     <NavItem href="/admin/video-ads" icon={<Video size={20} />} label="Video Ads" isOpen={sidebarOpen} />
+
+                    {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Visuals</div>}
+                    {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}
+                    <NavItem href="/admin/animations" icon={<Zap size={20} />} label="Animations" isOpen={sidebarOpen} />
 
                     {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Resources</div>}
                     {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}
