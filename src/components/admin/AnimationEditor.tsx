@@ -130,9 +130,23 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
         }));
     };
 
-    if (loading && !formData.name) return <div className="p-8 text-center text-gray-500 italic">Loading configuration...</div>;
+    // Helper to fix JSON-specific string values (like "Infinity")
+    const fixConfig = (obj: any): any => {
+        if (typeof obj !== 'object' || obj === null) {
+            if (obj === 'Infinity' || obj === 'infinity') return Infinity;
+            return obj;
+        }
+        if (Array.isArray(obj)) return obj.map(fixConfig);
+        const fixed: any = {};
+        for (const key in obj) {
+            fixed[key] = fixConfig(obj[key]);
+        }
+        return fixed;
+    };
 
-    const config = formData.config || DEFAULT_CONFIG;
+    const config = fixConfig(formData.config || DEFAULT_CONFIG);
+
+    if (loading && !formData.name) return <div className="p-8 text-center text-gray-500 italic">Loading configuration...</div>;
 
     return (
         <div className="flex flex-col h-[calc(100vh-120px)]">
@@ -184,7 +198,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 exit={{ opacity: 0 }}
                                 className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
                                 style={{
-                                    backgroundColor: config.overlay.background,
+                                    background: config.overlay.background,
                                     backdropFilter: `blur(${config.overlay.backdropBlur || '0px'})`
                                 }}
                             >
@@ -209,13 +223,13 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     </motion.div>
                                 </div>
 
-                                {config.elements.map((el, i) => (
+                                {config.elements.map((el: any, i: number) => (
                                     <motion.div
                                         key={i}
                                         initial={{ opacity: 0, scale: 0 }}
                                         animate={el.animate}
                                         transition={el.transition}
-                                        className="absolute text-5xl"
+                                        className="absolute text-5xl flex items-center justify-center"
                                     >
                                         {el.value}
                                     </motion.div>
