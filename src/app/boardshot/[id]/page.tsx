@@ -73,10 +73,22 @@ export default function BoardShotPage() {
     useEffect(() => {
         if (!match) return;
 
+        // Parse gamestate if it's a string (Safety for different Directus configs)
+        let gamestate: any = match.gamestate;
+        if (typeof gamestate === 'string') {
+            try {
+                gamestate = JSON.parse(gamestate);
+            } catch (e) {
+                console.error("Failed to parse gamestate JSON:", e);
+                gamestate = {};
+            }
+        }
+
         if (match.status !== 'live' || !match.timer_started_at) {
             setLocalTimer(match.timer_seconds || 0);
-            // Crucial: check gamestate specifically
-            const gsShot = match.gamestate?.shot_clock;
+            
+            // Check gamestate specifically for shot_clock
+            const gsShot = gamestate?.shot_clock;
             if (gsShot !== undefined && gsShot !== null) {
                 setShotClock(Number(gsShot));
             } else {
@@ -95,7 +107,13 @@ export default function BoardShotPage() {
             const newTime = Math.max(0, (match.timer_seconds || 0) - elapsed);
             setLocalTimer(newTime);
             
-            const gsShot = match.gamestate?.shot_clock;
+            // Recalculate gamestate from current match ref
+            let innerGs: any = match.gamestate;
+            if (typeof innerGs === 'string') {
+                try { innerGs = JSON.parse(innerGs); } catch (e) { innerGs = {}; }
+            }
+
+            const gsShot = innerGs?.shot_clock;
             if (gsShot !== undefined && gsShot !== null) {
                 const newShotClock = Math.max(0, Number(gsShot) - elapsed);
                 setShotClock(newShotClock);
@@ -109,11 +127,14 @@ export default function BoardShotPage() {
     // Enhanced logging for debugging
     useEffect(() => {
         if (match) {
-            console.log("[DEBUG] Match Update:", {
-                status: match.status,
+            let gs: any = match.gamestate;
+            if (typeof gs === 'string') {
+                try { gs = JSON.parse(gs); } catch (e) {}
+            }
+            console.log("[DEBUG] Match Sync:", {
                 timer: match.timer_seconds,
-                shotClock: match.gamestate?.shot_clock,
-                rawGamestate: match.gamestate
+                shotClock: gs?.shot_clock,
+                status: match.status
             });
         }
     }, [match]);
