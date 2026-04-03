@@ -102,16 +102,18 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
     };
 
     const updateConfig = (section: string, value: any) => {
-        setFormData({
-            ...formData,
+        setFormData(prev => ({
+            ...prev,
             config: {
-                ...formData.config,
+                ...(prev.config || DEFAULT_CONFIG),
                 [section]: value
-            }
-        });
+            } as ScoringAnimation['config']
+        }));
     };
 
     if (loading && !formData.name) return <div className="p-8 text-center text-gray-500 italic">Loading configuration...</div>;
+
+    const config = formData.config || DEFAULT_CONFIG;
 
     return (
         <div className="flex flex-col h-[calc(100vh-120px)]">
@@ -163,15 +165,15 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 exit={{ opacity: 0 }}
                                 className="absolute inset-0 z-50 flex items-center justify-center pointer-events-none"
                                 style={{
-                                    backgroundColor: formData.config?.overlay?.background,
-                                    backdropFilter: `blur(${formData.config?.overlay?.backdropBlur || '0px'})`
+                                    backgroundColor: config.overlay.background,
+                                    backdropFilter: `blur(${config.overlay.backdropBlur || '0px'})`
                                 }}
                             >
                                 <div className="relative z-10 text-center">
                                     <motion.div
-                                        initial={formData.config?.content?.initial}
-                                        animate={formData.config?.content?.animate}
-                                        transition={formData.config?.content?.transition}
+                                        initial={config.content.initial}
+                                        animate={config.content.animate}
+                                        transition={config.content.transition}
                                         className="text-white text-4xl font-black uppercase tracking-tighter mb-4"
                                     >
                                         STEPHEN CURRY
@@ -179,16 +181,16 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     </motion.div>
 
                                     <motion.div
-                                        initial={formData.config?.score?.initial}
-                                        animate={formData.config?.score?.animate}
-                                        transition={formData.config?.score?.transition}
+                                        initial={config.score.initial}
+                                        animate={config.score.animate}
+                                        transition={config.score.transition}
                                         className="text-7xl font-black italic drop-shadow-[0_0_30px_rgba(255,255,255,0.4)]"
                                     >
                                         +{formData.trigger_points || 3}
                                     </motion.div>
                                 </div>
 
-                                {formData.config?.elements?.map((el: any, i: number) => (
+                                {config.elements.map((el, i) => (
                                     <motion.div
                                         key={i}
                                         initial={{ opacity: 0, scale: 0 }}
@@ -230,7 +232,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Animation Name</label>
                                     <input
                                         type="text"
-                                        value={formData.name}
+                                        value={formData.name || ''}
                                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500"
                                     />
@@ -238,7 +240,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 <div>
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Trigger Points</label>
                                     <select
-                                        value={formData.trigger_points}
+                                        value={formData.trigger_points || 3}
                                         onChange={(e) => setFormData({ ...formData, trigger_points: parseInt(e.target.value) })}
                                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500"
                                     >
@@ -251,7 +253,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 <div className="flex items-center gap-2">
                                     <input
                                         type="checkbox"
-                                        checked={formData.active}
+                                        checked={formData.active || false}
                                         onChange={(e) => setFormData({ ...formData, active: e.target.checked })}
                                         className="w-4 h-4 rounded bg-gray-900 border-gray-800 text-blue-600"
                                     />
@@ -266,8 +268,8 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Background Color (RGBA)</label>
                                     <input
                                         type="text"
-                                        value={formData.config?.overlay?.background}
-                                        onChange={(e) => updateConfig('overlay', { ...formData.config.overlay, background: e.target.value })}
+                                        value={config.overlay.background}
+                                        onChange={(e) => updateConfig('overlay', { ...config.overlay, background: e.target.value })}
                                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500"
                                         placeholder="rgba(0,0,0,0.8)"
                                     />
@@ -276,8 +278,8 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     <label className="block text-xs font-bold text-gray-500 uppercase mb-2">Backdrop Blur</label>
                                     <input
                                         type="text"
-                                        value={formData.config?.overlay?.backdropBlur}
-                                        onChange={(e) => updateConfig('overlay', { ...formData.config.overlay, backdropBlur: e.target.value })}
+                                        value={config.overlay.backdropBlur}
+                                        onChange={(e) => updateConfig('overlay', { ...config.overlay, backdropBlur: e.target.value })}
                                         className="w-full bg-gray-900 border border-gray-800 rounded-lg p-3 text-white focus:outline-none focus:border-blue-500"
                                         placeholder="12px"
                                     />
@@ -288,15 +290,15 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                         {(activeTab === 'content' || activeTab === 'score') && (
                             <MotionControls 
                                 section={activeTab} 
-                                config={formData.config[activeTab]} 
-                                onChange={(val) => updateConfig(activeTab, val)} 
+                                config={(config as any)[activeTab]} 
+                                onChange={(val: any) => updateConfig(activeTab, val)} 
                             />
                         )}
 
                         {activeTab === 'elements' && (
                             <ElementsManager 
-                                elements={formData.config.elements || []} 
-                                onChange={(val) => updateConfig('elements', val)} 
+                                elements={config.elements || []} 
+                                onChange={(val: any) => updateConfig('elements', val)} 
                             />
                         )}
                     </div>
@@ -306,7 +308,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
     );
 }
 
-function TabButton({ id, active, onClick, icon, label }: any) {
+function TabButton({ id, active, onClick, icon, label }: { id: string; active: string; onClick: (id: any) => void; icon: React.ReactNode; label: string }) {
     const isActive = active === id;
     return (
         <button
@@ -321,7 +323,7 @@ function TabButton({ id, active, onClick, icon, label }: any) {
     );
 }
 
-function MotionControls({ section, config, onChange }: any) {
+function MotionControls({ section, config, onChange }: { section: string; config: any; onChange: (val: any) => void }) {
     const handleUpdate = (path: string, field: string, val: any) => {
         const numericVal = !isNaN(val) && val !== "" ? parseFloat(val) : val;
         onChange({
@@ -384,7 +386,7 @@ function MotionControls({ section, config, onChange }: any) {
     );
 }
 
-function ElementsManager({ elements, onChange }: any) {
+function ElementsManager({ elements, onChange }: { elements: any[]; onChange: (val: any[]) => void }) {
     const addElement = () => {
         const newEl = {
             type: 'emoji',
@@ -443,7 +445,7 @@ function ElementsManager({ elements, onChange }: any) {
     );
 }
 
-function InputGroup({ label, value, onChange, step = "1" }: any) {
+function InputGroup({ label, value, onChange, step = "1" }: { label: string; value: any; onChange: (v: string) => void; step?: string }) {
     return (
         <div>
             <label className="text-[10px] uppercase font-bold text-gray-500 mb-1 block">{label}</label>
