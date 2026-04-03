@@ -64,6 +64,20 @@ export default function BoardPage() {
 
     // Score Animation State
     const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number, config: any} | null>(null);
+    // Helper to fix JSON-specific string values (like "Infinity")
+    const fixConfig = (obj: any): any => {
+        if (typeof obj !== 'object' || obj === null) {
+            if (obj === 'Infinity' || obj === 'infinity') return Infinity;
+            return obj;
+        }
+        if (Array.isArray(obj)) return obj.map(fixConfig);
+        const fixed: any = {};
+        for (const key in obj) {
+            fixed[key] = fixConfig(obj[key]);
+        }
+        return fixed;
+    };
+
     const prevStatsRef = useRef<any>(null);
 
     // Ultra-safe comparison helper
@@ -375,18 +389,20 @@ export default function BoardPage() {
                         // Find suitable animations from the match config
                         const availableAnimations = (match.animations || [])
                             .map((a: any) => a.scoring_animations_id)
-                            .filter((a: any) => a && a.active && (!a.trigger_points || a.trigger_points === diff));
-                        
+                            .filter((a: any) => a && a.active && (!a.trigger_points || a.trigger_points == diff));
+
                         const selectedAnim = availableAnimations.length > 0 
                             ? availableAnimations[Math.floor(Math.random() * availableAnimations.length)]
                             : null;
 
-                        const config = selectedAnim?.config || (diff === 3 ? DEFAULT_3PT_CONFIG : DEFAULT_2PT_CONFIG);
+                        const config = fixConfig(selectedAnim?.config || (diff === 3 ? DEFAULT_3PT_CONFIG : DEFAULT_2PT_CONFIG));
+                        
+                        console.log(`[Animation] Selected ${selectedAnim?.name || 'Default'} for ${diff}pts`);
 
                         setRecentScore({ player, team, points: diff, config });
                         setTimeout(() => {
                             setRecentScore(null);
-                        }, 2500); // 2.5s duration
+                        }, 4000); // 4s duration to match complex anims
                     }
                 }
             }
@@ -432,7 +448,7 @@ export default function BoardPage() {
                     exit={recentScore.config.overlay.exit || { opacity: 0, transition: { duration: 0.5 } }}
                     className="absolute inset-0 z-[9999] flex flex-col items-center justify-center pointer-events-none"
                     style={{ 
-                        backgroundColor: recentScore.config.overlay.background || 'rgba(0,0,0,0.9)',
+                        background: recentScore.config.overlay.background || 'rgba(0,0,0,0.9)',
                         backdropFilter: `blur(${recentScore.config.overlay.backdropBlur || '10px'})`
                     }}
                 >
@@ -454,21 +470,7 @@ export default function BoardPage() {
                             {recentScore.player.name}
                         </h1>
 
-                        <div className="flex items-center justify-center gap-6">
-                            {/* Left Elements */}
-                            {recentScore.config.elements?.filter((el: any) => el.side !== 'right').map((el: any, i: number) => (
-                                <motion.span 
-                                    key={`left-${i}`}
-                                    initial={el.initial}
-                                    animate={el.animate}
-                                    exit={el.exit}
-                                    transition={el.transition}
-                                    className="text-4xl md:text-6xl flex items-center justify-center"
-                                >
-                                    {el.value}
-                                </motion.span>
-                            ))}
-
+                        <div className="relative">
                             <motion.div
                                 initial={recentScore.config.score.initial}
                                 animate={recentScore.config.score.animate}
@@ -482,16 +484,18 @@ export default function BoardPage() {
                                 +{recentScore.points}
                             </motion.div>
 
-                            {/* Right Elements */}
-                            {recentScore.config.elements?.filter((el: any) => el.side !== 'left').map((el: any, i: number) => (
-                                <motion.span 
-                                    key={`right-${i}`}
+                            {/* Decorative Elements (Centered or absolute as per JSON) */}
+                            {recentScore.config.elements?.map((el: any, i: number) => (
+                                <motion.div 
+                                    key={`el-${i}`}
+                                    initial={el.initial}
                                     animate={el.animate}
+                                    exit={el.exit}
                                     transition={el.transition}
-                                    className="text-4xl md:text-6xl"
+                                    className="absolute inset-0 flex items-center justify-center text-4xl md:text-6xl pointer-events-none"
                                 >
                                     {el.value}
-                                </motion.span>
+                                </motion.div>
                             ))}
                         </div>
                     </motion.div>
