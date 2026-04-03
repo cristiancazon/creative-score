@@ -53,25 +53,31 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [activeTab, setActiveTab] = useState<'general' | 'overlay' | 'content' | 'score' | 'elements' | 'json'>('general');
     const [jsonError, setJsonError] = useState<string | null>(null);
-
-    // ... (keep load logic)
-
-    const handleJsonChange = (val: string) => {
-        try {
-            const parsed = JSON.parse(val);
-            setFormData({ ...formData, config: parsed });
-            setJsonError(null);
-        } catch (e) {
-            setJsonError('Invalid JSON format');
-        }
-    };
-    
     const [formData, setFormData] = useState<Partial<ScoringAnimation>>({
         name: 'New Animation',
         trigger_points: 3,
         active: true,
         config: DEFAULT_CONFIG
     });
+
+    const [jsonText, setJsonText] = useState(JSON.stringify(DEFAULT_CONFIG, null, 2));
+
+    useEffect(() => {
+        if (formData.config && activeTab !== 'json') {
+            setJsonText(JSON.stringify(formData.config, null, 2));
+        }
+    }, [formData.config, activeTab]);
+
+    const handleJsonChange = (val: string) => {
+        setJsonText(val);
+        try {
+            const parsed = JSON.parse(val);
+            setFormData(prev => ({ ...prev, config: parsed }));
+            setJsonError(null);
+        } catch (e) {
+            setJsonError('Invalid JSON format');
+        }
+    };
 
     useEffect(() => {
         if (id) {
@@ -322,7 +328,7 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                     {jsonError && <span className="text-[10px] text-red-500 font-bold bg-red-900/20 px-2 py-0.5 rounded animate-pulse">{jsonError}</span>}
                                 </div>
                                 <textarea
-                                    value={JSON.stringify(config, null, 2)}
+                                    value={jsonText}
                                     onChange={(e) => handleJsonChange(e.target.value)}
                                     className={`flex-1 w-full bg-gray-900 border ${jsonError ? 'border-red-900' : 'border-gray-800'} rounded-lg p-4 text-xs font-mono text-purple-300 focus:outline-none custom-scrollbar min-h-[400px]`}
                                     spellCheck={false}
