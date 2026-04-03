@@ -6,7 +6,7 @@ import { directus } from '@/lib/directus';
 import { createItem, updateItem, readItem, readItems } from '@directus/sdk';
 import { ArrowLeft, Save, Monitor } from 'lucide-react';
 import Link from 'next/link';
-import { Match, Team, Sport, Board } from '@/types/directus';
+import { Match, Team, Sport, Board, ScoringAnimation } from '@/types/directus';
 
 interface MatchFormProps {
     id?: string;
@@ -19,6 +19,7 @@ export default function MatchForm({ id }: MatchFormProps) {
     const [sports, setSports] = useState<Sport[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     const [boards, setBoards] = useState<Board[]>([]);
+    const [allAnimations, setAllAnimations] = useState<ScoringAnimation[]>([]);
     // Filtered teams based on selected sport
     const [availableTeams, setAvailableTeams] = useState<Team[]>([]);
 
@@ -50,15 +51,18 @@ export default function MatchForm({ id }: MatchFormProps) {
                     console.warn("[DEBUG] Could not fetch schema fields", e);
                 }
 
-                const [sportsData, teamsData, boardsData] = await Promise.all([
+                const [sportsData, teamsData, boardsData, animationsData] = await Promise.all([
                     directus.request(readItems('sports')),
                     directus.request(readItems('teams')),
-                    directus.request(readItems('boards'))
+                    directus.request(readItems('boards')),
+                    directus.request(readItems('scoring_animations'))
                 ]);
                 setSports(sportsData);
                 setTeams(teamsData);
                 // @ts-ignore
                 setBoards(boardsData);
+                // @ts-ignore
+                setAllAnimations(animationsData);
 
                 if (boardsData && boardsData.length > 0) {
                     console.log("[DEBUG] Boards Sample ID:", typeof boardsData[0].id, boardsData[0].id);
@@ -103,6 +107,11 @@ export default function MatchForm({ id }: MatchFormProps) {
         let dateStr = data.start_time;
         if (dateStr && dateStr.length > 16) dateStr = dateStr.slice(0, 16);
 
+        // Format animations for the M2M field
+        const animationIds = data.animations?.map((a: any) => 
+            typeof a.scoring_animations_id === 'object' ? a.scoring_animations_id.id : a.scoring_animations_id
+        ) || [];
+
         setFormData({
             ...data,
             max_periods: data.max_periods ?? 4,
@@ -112,7 +121,9 @@ export default function MatchForm({ id }: MatchFormProps) {
             home_team: homeId as string,
             away_team: awayId as string,
             board: boardId as string,
-            start_time: dateStr
+            start_time: dateStr,
+            // @ts-ignore
+            animations: animationIds
         });
     };
 
@@ -122,10 +133,19 @@ export default function MatchForm({ id }: MatchFormProps) {
 
         try {
             console.log('Saving match data:', formData);
+            // Directus expects an array of objects or IDs depending on config.
+            // Using 'any' for the payload to avoid deep interface mismatch with M2M configuration
+            const payload: any = {
+                ...formData,
+                animations: (formData.animations as string[] || []).map(animId => ({
+                    scoring_animations_id: { id: animId }
+                }))
+            };
+
             if (id && id !== 'new') {
-                await directus.request(updateItem('matches', id, formData));
+                await directus.request(updateItem('matches', id, payload));
             } else {
-                await directus.request(createItem('matches', formData));
+                await directus.request(createItem('matches', payload));
             }
             router.push('/admin/matches');
             router.refresh();
@@ -258,6 +278,79 @@ export default function MatchForm({ id }: MatchFormProps) {
                             ))}
                         </select>
                         <p className="text-xs text-gray-500 mt-1">Select the visual appearance for this match's scoreboard.</p>
+                    </div>
+
+                    {/* Scoring Animations */}
+                    <div className="bg-gray-950/50 rounded-xl border border-gray-800/50 p-6 space-y-6">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-lg font-bold text-white">Scoring Animations</h3>
+                            <span className="text-xs text-gray-500 uppercase tracking-widest font-mono">Dynamic Celebrations</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            {/* +2 Points Animations */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-blue-400 uppercase tracking-widest border-b border-blue-900/30 pb-2">2 Points (+2)</h4>
+                                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {allAnimations.filter(a => a.trigger_points === 2 || !a.trigger_points).map(anim => (
+                                        <label key={anim.id} className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800 hover:border-blue-500/50 cursor-pointer transition-all group">
+                                            <input
+                                                type="checkbox"
+                                                checked={(formData.animations as string[] || []).includes(anim.id)}
+                                                onChange={(e) => {
+                                                    const currentAnims = (formData.animations as string[] || []);
+                                                    if (e.target.checked) {
+                                                        setFormData({ ...formData, animations: [...currentAnims, anim.id] });
+                                                    } else {
+                                                        setFormData({ ...formData, animations: currentAnims.filter(id => id !== anim.id) });
+                                                    }
+                                                }}
+                                                className="w-5 h-5 rounded border-gray-700 bg-gray-950 text-blue-600 focus:ring-blue-500 focus:ring-offset-gray-900"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-gray-200 group-hover:text-white">{anim.name}</span>
+                                                {!anim.trigger_points && <span className="text-[10px] text-gray-500 italic">Generic / All points</span>}
+                                            </div>
+                                        </label>
+                                    ))}
+                                    {allAnimations.filter(a => a.trigger_points === 2 || !a.trigger_points).length === 0 && (
+                                        <p className="text-xs text-gray-500 italic text-center py-4">No +2 animations defined</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* +3 Points Animations */}
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-bold text-yellow-400 uppercase tracking-widest border-b border-yellow-900/30 pb-2">3 Points (+3)</h4>
+                                <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                                    {allAnimations.filter(a => a.trigger_points === 3 || !a.trigger_points).map(anim => (
+                                        <label key={anim.id} className="flex items-center gap-3 p-3 bg-gray-900/50 rounded-lg border border-gray-800 hover:border-yellow-500/50 cursor-pointer transition-all group">
+                                            <input
+                                                type="checkbox"
+                                                checked={(formData.animations as string[] || []).includes(anim.id)}
+                                                onChange={(e) => {
+                                                    const currentAnims = (formData.animations as string[] || []);
+                                                    if (e.target.checked) {
+                                                        setFormData({ ...formData, animations: [...currentAnims, anim.id] });
+                                                    } else {
+                                                        setFormData({ ...formData, animations: currentAnims.filter(id => id !== anim.id) });
+                                                    }
+                                                }}
+                                                className="w-5 h-5 rounded border-gray-700 bg-gray-950 text-yellow-600 focus:ring-yellow-500 focus:ring-offset-gray-900"
+                                            />
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-medium text-gray-200 group-hover:text-white">{anim.name}</span>
+                                                {!anim.trigger_points && <span className="text-[10px] text-gray-500 italic">Generic / All points</span>}
+                                            </div>
+                                        </label>
+                                    ))}
+                                    {allAnimations.filter(a => a.trigger_points === 3 || !a.trigger_points).length === 0 && (
+                                        <p className="text-xs text-gray-500 italic text-center py-4">No +3 animations defined</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-2">Animations will be randomly selected from the checked list when a player scores.</p>
                     </div>
 
                     {/* Custom Rules */}

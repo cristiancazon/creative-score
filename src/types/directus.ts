@@ -87,6 +87,7 @@ export interface Schema {
     boards: Board[];
     text_ads: TextAd[];
     video_ads: VideoAd[];
+    scoring_animations: ScoringAnimation[];
 }
 
 export interface Board {
