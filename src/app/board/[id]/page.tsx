@@ -459,9 +459,11 @@ export default function BoardPage() {
                             {recentScore.config.elements?.filter((el: any) => el.side !== 'right').map((el: any, i: number) => (
                                 <motion.span 
                                     key={`left-${i}`}
+                                    initial={el.initial}
                                     animate={el.animate}
+                                    exit={el.exit}
                                     transition={el.transition}
-                                    className="text-4xl md:text-6xl"
+                                    className="text-4xl md:text-6xl flex items-center justify-center"
                                 >
                                     {el.value}
                                 </motion.span>

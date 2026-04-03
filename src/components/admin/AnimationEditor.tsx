@@ -226,8 +226,9 @@ export default function AnimationEditor({ id }: AnimationEditorProps) {
                                 {config.elements.map((el: any, i: number) => (
                                     <motion.div
                                         key={i}
-                                        initial={{ opacity: 0, scale: 0 }}
+                                        initial={el.initial}
                                         animate={el.animate}
+                                        exit={el.exit}
                                         transition={el.transition}
                                         className="absolute text-5xl flex items-center justify-center"
                                     >
