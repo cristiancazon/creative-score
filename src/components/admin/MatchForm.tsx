@@ -34,7 +34,8 @@ export default function MatchForm({ id }: MatchFormProps) {
         timer_seconds: 0,
         max_periods: 4,
         period_length: 10,
-        overtime_length: 5
+        overtime_length: 5,
+        animations: []
     });
 
     useEffect(() => {
@@ -96,7 +97,10 @@ export default function MatchForm({ id }: MatchFormProps) {
     }, [formData.sport, teams]);
 
     const fetchMatch = async (matchId: string) => {
-        const data = await directus.request(readItem('matches', matchId));
+        const data = await directus.request(readItem('matches', matchId, {
+            fields: ['*', 'home_team.*', 'away_team.*', 'sport.*', 'board.*', 'animations.scoring_animations_id.*'] as any
+        })) as any;
+        
         // Normalize IDs
         const sportId = typeof data.sport === 'object' && data.sport ? (data.sport as Sport).id : data.sport;
         const homeId = typeof data.home_team === 'object' && data.home_team ? (data.home_team as Team).id : data.home_team;
@@ -108,9 +112,11 @@ export default function MatchForm({ id }: MatchFormProps) {
         if (dateStr && dateStr.length > 16) dateStr = dateStr.slice(0, 16);
 
         // Format animations for the M2M field
-        const animationIds = data.animations?.map((a: any) => 
+        const animationIds = (data.animations as any[])?.map((a: any) => 
             typeof a.scoring_animations_id === 'object' ? a.scoring_animations_id.id : a.scoring_animations_id
-        ) || [];
+        ).filter(Boolean) || [];
+
+        console.log("[DEBUG] Loaded animation IDs:", animationIds);
 
         setFormData({
             ...data,
@@ -133,14 +139,17 @@ export default function MatchForm({ id }: MatchFormProps) {
 
         try {
             console.log('Saving match data:', formData);
+            
             // Directus expects an array of objects or IDs depending on config.
-            // Using 'any' for the payload to avoid deep interface mismatch with M2M configuration
+            // For M2M updates, we provide the junction objects.
             const payload: any = {
                 ...formData,
                 animations: (formData.animations as string[] || []).map(animId => ({
                     scoring_animations_id: { id: animId }
                 }))
             };
+            
+            console.log("[DEBUG] Payload to save:", payload);
 
             if (id && id !== 'new') {
                 await directus.request(updateItem('matches', id, payload));
