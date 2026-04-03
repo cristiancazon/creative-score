@@ -106,7 +106,7 @@ const content = {
         'Request a free trial and see Creative Score in action on your own screen. Our team will get you set up in minutes.',
       button: 'Request a Free Trial',
       email: 'cristian@xerex.tech',
-      or: 'Or email us directly at',
+      or: 'Contact our team directly',
     },
     footer: {
       rights: '© 2026 Creative Score. All rights reserved.',
@@ -213,7 +213,7 @@ const content = {
         'Solicita una prueba gratuita y ve Creative Score en acción en tu propia pantalla. Nuestro equipo te configurará en minutos.',
       button: 'Solicitar Prueba Gratuita',
       email: 'cristian@xerex.tech',
-      or: 'O escríbenos directamente a',
+      or: 'Contacta directamente con nosotros',
     },
     footer: {
       rights: '© 2026 Creative Score. Todos los derechos reservados.',
@@ -339,12 +339,12 @@ export default function LandingPage() {
             >
               Login
             </button>
-            <a
-              href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
+            <button
+              onClick={() => scrollTo('contact')}
               className="bg-gradient-to-r from-cyan-400 to-blue-600 hover:from-cyan-300 hover:to-blue-500 text-white text-sm font-semibold px-5 py-2 rounded-xl transition-all glow hidden sm:block"
             >
               {t.nav.demo}
-            </a>
+            </button>
           </div>
         </div>
       </nav>
@@ -390,12 +390,12 @@ export default function LandingPage() {
               style={{ transitionDelay: '0.3s' }}
               className="flex flex-col sm:flex-row items-center justify-center gap-6 pt-4"
             >
-              <a
-                href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
+              <button
+                onClick={() => scrollTo('contact')}
                 className="bg-gradient-to-r from-cyan-400 to-blue-600 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-xl hover:shadow-cyan-400/30 hover:scale-105 transition-all duration-300"
               >
                 {t.hero.cta}
-              </a>
+              </button>
               <button
                 onClick={() => scrollTo('features')}
                 className="glass-card text-white border border-white/10 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-slate-800/40 transition-all duration-300"
@@ -642,29 +642,46 @@ export default function LandingPage() {
       </Section>
 
       {/* ── CTA ── */}
-      <section className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(37,99,235,0.2) 0%, transparent 70%)' }} />
+      <section id="contact" className="py-28 px-6 relative overflow-hidden">
+        <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse 70% 80% at 50% 50%, rgba(6, 182, 212, 0.15) 0%, transparent 70%)' }} />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
           <Section>
             <motion.h2 variants={fadeUp} className="text-4xl sm:text-6xl font-black mb-6">
               {t.cta.title}
             </motion.h2>
-            <motion.p variants={fadeUp} className="text-gray-400 text-lg mb-10 leading-relaxed">
+            <motion.p variants={fadeUp} className="text-gray-400 text-lg mb-12 leading-relaxed">
               {t.cta.subtitle}
             </motion.p>
-            <motion.div variants={fadeUp} className="flex flex-col items-center gap-5">
-              <a
-                href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
-                className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-10 py-5 rounded-full text-lg transition-all glow hover:scale-105 active:scale-95 inline-block"
-              >
-                {t.cta.button}
-              </a>
-              <p className="text-gray-500 text-sm">
-                {t.cta.or}{' '}
-                <a href="mailto:cristian@xerex.tech" className="text-blue-400 hover:text-blue-300 underline underline-offset-2">
-                  {t.cta.email}
+            
+            <motion.div variants={fadeUp} className="space-y-8">
+              <div className="flex flex-col items-center gap-6">
+                <p className="text-cyan-400 text-xs font-bold uppercase tracking-[0.2em]">
+                  {t.cta.or}
+                </p>
+                <a
+                  href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
+                  className="group relative"
+                >
+                  <div className="absolute -inset-4 bg-gradient-to-r from-cyan-500/20 to-blue-600/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="relative glass border border-cyan-500/30 px-8 py-5 rounded-2xl flex items-center gap-4 hover:border-cyan-400 transition-all card-hover group-hover:scale-105">
+                    <div className="w-10 h-10 rounded-full bg-cyan-500/10 flex items-center justify-center text-cyan-400">
+                      ✉
+                    </div>
+                    <span className="text-xl sm:text-3xl font-bold text-white tracking-tight">
+                      {t.cta.email}
+                    </span>
+                  </div>
                 </a>
-              </p>
+              </div>
+
+              <div className="pt-8">
+                <a
+                  href={`mailto:cristian@xerex.tech?subject=Creative Score – Free Trial Request`}
+                  className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-12 py-5 rounded-full text-lg transition-all glow hover:scale-105 active:scale-95 inline-block"
+                >
+                  {t.cta.button}
+                </a >
+              </div>
             </motion.div>
           </Section>
         </div>
