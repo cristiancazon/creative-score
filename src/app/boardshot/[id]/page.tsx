@@ -141,16 +141,22 @@ export default function BoardShotPage() {
     };
 
     const formatGameTime = (seconds: number) => {
+        if (isNaN(seconds)) return '0:00';
         if (seconds < 60 && seconds > 0) return Math.abs(seconds).toFixed(1);
         const m = Math.floor(seconds / 60);
         const s = Math.floor(seconds % 60);
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    const formatShotClock = (seconds: number) => {
-        if (seconds < 5 && seconds > 0) return seconds.toFixed(1);
-        return Math.ceil(seconds).toString();
+    const formatShotClock = (seconds: any) => {
+        const value = Number(seconds);
+        if (isNaN(value)) return '0';
+        if (value < 5 && value > 0) return value.toFixed(1);
+        return Math.ceil(value).toString();
     };
+
+    const isShotClockLow = shotClock !== null && Number(shotClock) < 5 && Number(shotClock) > 0;
+    const isShotClockExpired = shotClock !== null && Number(shotClock) <= 0;
 
     return (
         <div 
@@ -171,7 +177,9 @@ export default function BoardShotPage() {
             <div className="h-[70%] flex items-center justify-center relative">
                 <div 
                     className={`text-[65vh] leading-none select-none transition-colors duration-200 ${
-                        shotClock !== null && shotClock < 5 ? 'text-red-500 drop-shadow-[0_0_50px_rgba(239,68,68,0.5)]' : 'text-yellow-400'
+                        isShotClockExpired ? 'text-red-600' : 
+                        isShotClockLow ? 'text-red-500 drop-shadow-[0_0_50px_rgba(239,68,68,0.5)]' : 
+                        'text-yellow-400'
                     }`}
                 >
                     {shotClock !== null ? formatShotClock(shotClock) : ''}
