@@ -46,6 +46,37 @@ export interface Match {
     max_periods?: number;
     period_length?: number;
     overtime_length?: number;
+    animations?: (string | ScoringAnimation)[];
+}
+
+export interface ScoringAnimation {
+    id: string;
+    name: string;
+    trigger_points?: number;
+    config: {
+        overlay: {
+            background: string;
+            backdropBlur: string;
+        };
+        content: {
+            initial: any;
+            animate: any;
+            exit: any;
+            transition: any;
+        };
+        score: {
+            initial: any;
+            animate: any;
+            transition: any;
+        };
+        elements: {
+            type: string;
+            value: string;
+            animate: any;
+            transition: any;
+        }[];
+    };
+    active: boolean;
 }
 
 export interface Schema {

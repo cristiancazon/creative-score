@@ -9,6 +9,34 @@ import { Match, Board, Team } from '@/types/directus';
 import { Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const DEFAULT_2PT_CONFIG = {
+    overlay: { background: "rgba(0,0,0,0.9)", backdropBlur: "10px" },
+    content: {
+        initial: { y: 100, scale: 0.5, opacity: 0 },
+        animate: { y: 0, scale: 1, opacity: 1 },
+        exit: { scale: 1.5, opacity: 0, filter: "blur(20px)" },
+        transition: { type: "spring", damping: 15, stiffness: 100 }
+    },
+    score: {
+        initial: { scale: 0, rotate: -20 },
+        animate: { scale: 1, rotate: 0 },
+        transition: { type: "spring", bounce: 0.7, delay: 0.2 }
+    },
+    elements: []
+};
+
+const DEFAULT_3PT_CONFIG = {
+    ...DEFAULT_2PT_CONFIG,
+    elements: [
+        {
+            type: "emoji",
+            value: "🔥",
+            animate: { scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] },
+            transition: { repeat: Infinity, duration: 1 }
+        }
+    ]
+};
+
 export default function BoardPage() {
     const params = useParams();
     const searchParams = useSearchParams();
@@ -35,7 +63,7 @@ export default function BoardPage() {
     const [localTimer, setLocalTimer] = useState(0);
 
     // Score Animation State
-    const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number} | null>(null);
+    const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number, config: any} | null>(null);
     const prevStatsRef = useRef<any>(null);
 
     // Ultra-safe comparison helper
@@ -202,7 +230,7 @@ export default function BoardPage() {
             // LIVE MODE: ID is Match ID
             try {
                 const matchData = await directus.request(readItem('matches', id as string, {
-                    fields: ['*' as any, 'home_team.*' as any, 'away_team.*' as any, 'board.*' as any]
+                    fields: ['*' as any, 'home_team.*' as any, 'away_team.*' as any, 'board.*' as any, 'animations.scoring_animations_id.*' as any]
                 })) as any;
 
                 setMatch(matchData);
@@ -302,9 +330,9 @@ export default function BoardPage() {
 
         const pollData = async () => {
             try {
-                // Fetch all fields to ensure we don't miss anything or error on specific fields
+                // Fetch all fields including animations
                 const updatedMatch = await directus.request(readItem('matches', id, {
-                    fields: ['*']
+                    fields: ['*', 'animations.scoring_animations_id.*'] as any[]
                 }));
 
                 setMatch(prev => {
@@ -344,10 +372,21 @@ export default function BoardPage() {
                     }
 
                     if (player && team) {
-                        setRecentScore({ player, team, points: diff });
+                        // Find suitable animations from the match config
+                        const availableAnimations = (match.animations || [])
+                            .map((a: any) => a.scoring_animations_id)
+                            .filter((a: any) => a && a.active && (!a.trigger_points || a.trigger_points === diff));
+                        
+                        const selectedAnim = availableAnimations.length > 0 
+                            ? availableAnimations[Math.floor(Math.random() * availableAnimations.length)]
+                            : null;
+
+                        const config = selectedAnim?.config || (diff === 3 ? DEFAULT_3PT_CONFIG : DEFAULT_2PT_CONFIG);
+
+                        setRecentScore({ player, team, points: diff, config });
                         setTimeout(() => {
                             setRecentScore(null);
-                        }, 2000); // Hide after 2s
+                        }, 2500); // 2.5s duration
                     }
                 }
             }
@@ -383,21 +422,25 @@ export default function BoardPage() {
         return `${m}:${s.toString().padStart(2, '0')}`;
     };
 
-    // --- SCORE OVERLAY COMPONENT ---
+    // --- SCORE OVERLAY COMPONENT (DYNAMIC) ---
     const scoreOverlay = (
         <AnimatePresence>
             {recentScore && (
                 <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    exit={{ opacity: 0, transition: { duration: 0.5 } }}
-                    className="absolute inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-md"
+                    initial={recentScore.config.overlay.initial || { opacity: 0 }}
+                    animate={recentScore.config.overlay.animate || { opacity: 1 }}
+                    exit={recentScore.config.overlay.exit || { opacity: 0, transition: { duration: 0.5 } }}
+                    className="absolute inset-0 z-[9999] flex flex-col items-center justify-center pointer-events-none"
+                    style={{ 
+                        backgroundColor: recentScore.config.overlay.background || 'rgba(0,0,0,0.9)',
+                        backdropFilter: `blur(${recentScore.config.overlay.backdropBlur || '10px'})`
+                    }}
                 >
                     <motion.div 
-                        initial={{ y: 100, scale: 0.5, opacity: 0 }}
-                        animate={{ y: 0, scale: 1, opacity: 1 }}
-                        exit={{ scale: 1.5, opacity: 0, filter: "blur(20px)" }}
-                        transition={{ type: "spring", damping: 15, stiffness: 100 }}
+                        initial={recentScore.config.content.initial}
+                        animate={recentScore.config.content.animate}
+                        exit={recentScore.config.content.exit}
+                        transition={recentScore.config.content.transition}
                         className="text-center flex flex-col items-center p-4 max-w-full"
                     >
                         <h2 
@@ -411,32 +454,44 @@ export default function BoardPage() {
                             {recentScore.player.name}
                         </h1>
 
-                        <motion.div
-                            initial={{ scale: 0, rotate: -20 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                            transition={{ type: "spring", bounce: 0.7, delay: 0.2 }}
-                            className="text-6xl md:text-8xl font-black italic leading-none flex items-center justify-center gap-4"
-                            style={{ 
-                                color: recentScore.team.primary_color || '#fff',
-                                textShadow: '0 10px 30px rgba(0,0,0,0.5)'
-                            }}
-                        >
-                            {recentScore.points === 3 && (
+                        <div className="flex items-center justify-center gap-6">
+                            {/* Left Elements */}
+                            {recentScore.config.elements?.filter((el: any) => el.side !== 'right').map((el: any, i: number) => (
                                 <motion.span 
-                                    animate={{ scale: [1, 1.2, 1], rotate: [0, 10, -10, 0] }}
-                                    transition={{ repeat: Infinity, duration: 1 }}
+                                    key={`left-${i}`}
+                                    animate={el.animate}
+                                    transition={el.transition}
                                     className="text-4xl md:text-6xl"
-                                >🔥</motion.span>
-                            )}
-                            <span>+{recentScore.points}</span>
-                            {recentScore.points === 3 && (
+                                >
+                                    {el.value}
+                                </motion.span>
+                            ))}
+
+                            <motion.div
+                                initial={recentScore.config.score.initial}
+                                animate={recentScore.config.score.animate}
+                                transition={recentScore.config.score.transition}
+                                className="text-6xl md:text-8xl font-black italic leading-none"
+                                style={{ 
+                                    color: recentScore.team.primary_color || '#fff',
+                                    textShadow: '0 10px 30px rgba(0,0,0,0.5)'
+                                }}
+                            >
+                                +{recentScore.points}
+                            </motion.div>
+
+                            {/* Right Elements */}
+                            {recentScore.config.elements?.filter((el: any) => el.side !== 'left').map((el: any, i: number) => (
                                 <motion.span 
-                                    animate={{ scale: [1, 1.2, 1], rotate: [0, -10, 10, 0] }}
-                                    transition={{ repeat: Infinity, duration: 1 }}
+                                    key={`right-${i}`}
+                                    animate={el.animate}
+                                    transition={el.transition}
                                     className="text-4xl md:text-6xl"
-                                >🔥</motion.span>
-                            )}
-                        </motion.div>
+                                >
+                                    {el.value}
+                                </motion.span>
+                            ))}
+                        </div>
                     </motion.div>
                 </motion.div>
             )}
