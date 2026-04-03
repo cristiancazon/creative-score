@@ -71,10 +71,16 @@ export default function BoardShotPage() {
 
     // Timer Tick Logic (Same as Board)
     useEffect(() => {
-        if (!match || match.status !== 'live' || !match.timer_started_at) {
-            if (match) {
-                setLocalTimer(match.timer_seconds || 0);
-                setShotClock(match.gamestate?.shot_clock ?? null);
+        if (!match) return;
+
+        if (match.status !== 'live' || !match.timer_started_at) {
+            setLocalTimer(match.timer_seconds || 0);
+            // Crucial: check gamestate specifically
+            const gsShot = match.gamestate?.shot_clock;
+            if (gsShot !== undefined && gsShot !== null) {
+                setShotClock(Number(gsShot));
+            } else {
+                setShotClock(null);
             }
             return;
         }
@@ -82,20 +88,35 @@ export default function BoardShotPage() {
         const tick = () => {
             const now = Date.now();
             const startedAt = new Date(match.timer_started_at!).getTime();
+            if (isNaN(startedAt)) return;
+
             const elapsed = (now - startedAt) / 1000;
             
             const newTime = Math.max(0, (match.timer_seconds || 0) - elapsed);
             setLocalTimer(newTime);
             
-            if (match.gamestate?.shot_clock !== undefined && match.gamestate.shot_clock !== null) {
-                const newShotClock = Math.max(0, match.gamestate.shot_clock - elapsed);
+            const gsShot = match.gamestate?.shot_clock;
+            if (gsShot !== undefined && gsShot !== null) {
+                const newShotClock = Math.max(0, Number(gsShot) - elapsed);
                 setShotClock(newShotClock);
             }
         };
 
         const timerId = setInterval(tick, 100);
         return () => clearInterval(timerId);
-    }, [match?.status, match?.timer_seconds, match?.timer_started_at, match?.gamestate?.shot_clock]);
+    }, [match?.status, match?.timer_seconds, match?.timer_started_at, match?.gamestate]);
+
+    // Enhanced logging for debugging
+    useEffect(() => {
+        if (match) {
+            console.log("[DEBUG] Match Update:", {
+                status: match.status,
+                timer: match.timer_seconds,
+                shotClock: match.gamestate?.shot_clock,
+                rawGamestate: match.gamestate
+            });
+        }
+    }, [match]);
 
     // Handle Scaling for full screen feel
     useEffect(() => {
