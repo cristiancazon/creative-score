@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { directus } from '@/lib/directus';
+import { useMatchSubscription } from '@/hooks/useMatchSubscription';
 import { readItem } from '@directus/sdk';
 import { Match, Board } from '@/types/directus';
 import { Loader2 } from 'lucide-react';
@@ -46,28 +47,21 @@ export default function BoardShotPage() {
         fetchData();
     }, [id]);
 
-    // Polling for updates
-    useEffect(() => {
-        if (!id) return;
+    // Real-time updates via WebSocket (with 3s polling fallback)
+    const handleMatchUpdate = useCallback((data: any) => {
+        setMatch(prev => {
+            if (!prev) return prev;
+            return { ...prev, ...data };
+        });
+    }, []);
 
-        const pollData = async () => {
-            try {
-                const updatedMatch = await directus.request(readItem('matches', id, {
-                    fields: ['*', 'sport.*', 'board.*'] as any[]
-                })) as unknown as Match;
-
-                setMatch(prev => {
-                    if (!prev) return prev;
-                    return { ...prev, ...updatedMatch };
-                });
-            } catch (err) {
-                console.error("Polling error:", err);
-            }
-        };
-
-        const interval = setInterval(pollData, 1000);
-        return () => clearInterval(interval);
-    }, [id]);
+    useMatchSubscription({
+        matchId: id || null,
+        fields: ['*', 'sport.*', 'board.*'],
+        skip: !id,
+        onData: handleMatchUpdate,
+        fallbackInterval: 3000,
+    });
 
     // Timer Tick Logic (Identical to Main Board)
     useEffect(() => {
@@ -117,20 +111,7 @@ export default function BoardShotPage() {
         return () => clearInterval(timerId);
     }, [match]);
 
-    // Enhanced logging for debugging
-    useEffect(() => {
-        if (match) {
-            let gs: any = match.gamestate;
-            if (typeof gs === 'string') {
-                try { gs = JSON.parse(gs); } catch (e) {}
-            }
-            console.log("[DEBUG] Match Sync (BoardShot):", {
-                timer: match.timer_seconds,
-                sc_data: gs?.shot_clock || gs?.shotClock,
-                status: match.status
-            });
-        }
-    }, [match]);
+
 
     // Handle Scaling for full screen feel
     useEffect(() => {

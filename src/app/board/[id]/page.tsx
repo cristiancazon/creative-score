@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { directus } from '@/lib/directus';
+import { useMatchSubscription } from '@/hooks/useMatchSubscription';
 
 import { readItem, readMe, readItems } from '@directus/sdk';
 import { Match, Board, Team } from '@/types/directus';
@@ -338,29 +339,21 @@ export default function BoardPage() {
         fetchData();
     }, [id, isAuthenticated, isPreview]);
 
-    // Polling for updates (More robust than WS in some envs)
-    useEffect(() => {
-        if (!id || isPreview) return;
+    // Real-time updates via WebSocket (with 3s polling fallback)
+    const handleMatchUpdate = useCallback((data: any) => {
+        setMatch(prev => {
+            if (!prev) return prev;
+            return { ...prev, ...data };
+        });
+    }, []);
 
-        const pollData = async () => {
-            try {
-                // Fetch all fields including animations
-                const updatedMatch = await directus.request(readItem('matches', id, {
-                    fields: ['*', 'animations.scoring_animations_id.*'] as any[]
-                }));
-
-                setMatch(prev => {
-                    if (!prev) return prev;
-                    return { ...prev, ...updatedMatch };
-                });
-            } catch (err) {
-                console.error("Polling error:", err);
-            }
-        };
-
-        const interval = setInterval(pollData, 1000); // Faster polling (1s)
-        return () => clearInterval(interval);
-    }, [id, isPreview]);
+    useMatchSubscription({
+        matchId: id || null,
+        fields: ['*', 'animations.scoring_animations_id.*'],
+        skip: isPreview || !isAuthenticated,
+        onData: handleMatchUpdate,
+        fallbackInterval: 3000,
+    });
 
     // Score Delta Detector
     useEffect(() => {
@@ -397,7 +390,7 @@ export default function BoardPage() {
 
                         const config = fixConfig(selectedAnim?.config || (diff === 3 ? DEFAULT_3PT_CONFIG : DEFAULT_2PT_CONFIG));
                         
-                        console.log(`[Animation] Selected ${selectedAnim?.name || 'Default'} for ${diff}pts`);
+
 
                         setRecentScore({ player, team, points: diff, config });
                         setTimeout(() => {
