@@ -3,7 +3,7 @@ import { Schema } from '@/types/directus';
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL || 'http://localhost:8055';
 
-console.log(`[Directus Config] Initializing. Env: ${typeof window !== 'undefined' ? 'Client' : 'Server'}`);
+
 
 // Custom storage adaptor to ensure we use localStorage in the browser correctly
 // The SDK seems to pass the entire token object as the first argument to 'set' in some configurations.
@@ -13,7 +13,7 @@ const storage = typeof window !== 'undefined' ? {
   get: () => {
     try {
       const val = window.localStorage.getItem(AUTH_STORAGE_KEY);
-      console.log(`[Directus Storage] GET ->`, val ? 'FOUND' : 'NULL');
+
       // If it's literally the string "undefined", return null
       if (val === 'undefined' || val === null) return null;
       return JSON.parse(val);
@@ -24,7 +24,7 @@ const storage = typeof window !== 'undefined' ? {
   },
   set: (data: any) => {
     // In 'json' mode, the SDK passes the entire session object as the first argument
-    console.log(`[Directus Storage] SET ->`, typeof data);
+
     if (data === undefined) {
       console.warn("[Directus Storage] Attempted to set undefined data based on single arg check");
       return;
@@ -32,7 +32,7 @@ const storage = typeof window !== 'undefined' ? {
     window.localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
   },
   delete: () => {
-    console.log(`[Directus Storage] DELETE`);
+
     window.localStorage.removeItem(AUTH_STORAGE_KEY);
   }
 } : undefined;

@@ -45,17 +45,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const checkAuth = async () => {
             try {
                 const token = await directus.getToken();
-                console.log("[AdminLayout] Checking auth, token:", token);
+
 
                 if (!token) {
-                    console.log("[AdminLayout] No token found. Redirecting to login.");
+
                     router.push('/login');
                     return;
                 }
 
                 // Try to fetch current user
                 await directus.request(readMe());
-                console.log("[AdminLayout] User authorized");
+
                 setAuthorized(true);
             } catch (err) {
                 console.error("[AdminLayout] Auth check failed:", err);

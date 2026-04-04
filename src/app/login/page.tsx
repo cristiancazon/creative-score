@@ -23,7 +23,7 @@ export default function LoginPage() {
             // Standard login signature expecting object
             // @ts-ignore
             const loginResult = await directus.login({ email, password });
-            console.log("Login Result:", loginResult);
+
 
             // Manual setToken is not needed as login handles storage
             // But we keep the check to ensure success
@@ -31,9 +31,7 @@ export default function LoginPage() {
                 throw new Error("Login failed - no token received");
             }
 
-            // Check token immediately after
-            const token = await directus.getToken();
-            console.log("Token after login:", token);
+
 
             router.push('/admin');
         } catch (err: any) {
