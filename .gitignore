@@ -39,3 +39,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# backup & dev files
+page_backup*.tsx
+page_recovered*.tsx
+page_restored*.tsx
+build_output.txt
+dashboard_design.html
+landing_design.html
+
+# plugin builds
+*.lplug4
+CreativeScoreMX_v*.zip
