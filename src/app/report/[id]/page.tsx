@@ -2,17 +2,41 @@
 
 import { useEffect, useState, use } from 'react';
 import { directus } from '@/lib/directus';
-import { readItem, readItems } from '@directus/sdk';
+import { readItem, readItems, readMe } from '@directus/sdk';
 import { Match, Player } from '@/types/directus';
+import { useRouter } from 'next/navigation';
 
 export default function MatchReportPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
+    const router = useRouter();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [match, setMatch] = useState<Match | null>(null);
     const [homePlayers, setHomePlayers] = useState<Player[]>([]);
     const [awayPlayers, setAwayPlayers] = useState<Player[]>([]);
     const [loading, setLoading] = useState(true);
 
+    // Auth guard — same pattern as admin/layout.tsx
     useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const token = await directus.getToken();
+                if (!token) {
+                    router.push('/login');
+                    return;
+                }
+                await directus.request(readMe());
+                setIsAuthenticated(true);
+            } catch (err) {
+                console.error("[Report] Auth check failed:", err);
+                router.push('/login');
+            }
+        };
+        checkAuth();
+    }, [router]);
+
+    // Fetch data only after authentication succeeds
+    useEffect(() => {
+        if (!isAuthenticated) return;
         const load = async () => {
             try {
                 const matchData = await directus.request(readItem('matches', id, {
@@ -46,8 +70,9 @@ export default function MatchReportPage({ params }: { params: Promise<{ id: stri
             }
         };
         load();
-    }, [id]);
+    }, [id, isAuthenticated]);
 
+    if (!isAuthenticated) return <div className="p-8 text-black bg-white min-h-screen flex items-center justify-center text-gray-500">Checking access...</div>;
     if (loading) return <div className="p-8 text-black bg-white min-h-screen">Loading Report Data...</div>;
     if (!match) return <div className="p-8 text-black bg-white min-h-screen">Match not found.</div>;
 
