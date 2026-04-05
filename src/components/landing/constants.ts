@@ -208,6 +208,10 @@ export const content = {
       email: 'cristian@xerex.tech',
       or: 'Contacta directamente con nosotros',
     },
+    footer: {
+      rights: '© 2026 Creative Score. Todos los derechos reservados.',
+      tagline: 'Marcadores digitales profesionales para cada cancha.',
+    },
   },
   de: {
     nav: {
