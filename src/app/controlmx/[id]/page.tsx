@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { directus } from '@/lib/directus';
+import { useMatchSubscription } from '@/hooks/useMatchSubscription';
 import { readItem, updateItem, readMe, readItems } from '@directus/sdk';
 import { Match, Player } from '@/types/directus';
 import { Play, Pause, ChevronLeft, ChevronRight, X, ArrowLeft, ArrowRight } from 'lucide-react';
@@ -176,10 +177,10 @@ export default function ControlMXPage() {
         if (match) streamImages();
     }, [match?.gamestate, selectedTeam, view, activePlayer?.id, match?.status]);
 
-    // Fetch Logic
+    // Initial Data Load (teams, players, ads — loaded ONCE)
     useEffect(() => {
         if (!id || !isAuthenticated) return;
-        const fetchData = async () => {
+        const fetchInitialData = async () => {
             try {
                 const matchData = (await directus.request(readItem('matches', id, { fields: ['*', 'home_team.*', 'away_team.*'] as any }))) as any as Match;
                 setMatch(matchData);
@@ -191,7 +192,7 @@ export default function ControlMXPage() {
                 } catch (adErr) { console.warn(adErr); }
                 const homeTeamId = matchData.home_team ? String(typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
                 const awayTeamId = matchData.away_team ? String(typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
-                if (homeTeamId && awayTeamId && homePlayers.length === 0) {
+                if (homeTeamId && awayTeamId) {
                         const playersData = (await directus.request(readItems('players', { filter: { _or: [{ team: { _eq: homeTeamId } }, { team: { _eq: awayTeamId } }] }, limit: 100 }))) as Player[];
                         const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({ id: `temp_${teamId}_${i+4}`, name: `Player ${i+4}`, number: i+4, team: teamId, temp: true }));
                         const realHome = playersData.filter((p: any) => String(typeof p.team === 'object' ? p.team.id : p.team) === homeTeamId);
@@ -201,10 +202,31 @@ export default function ControlMXPage() {
                 }
             } catch (err) { console.error(err); } finally { setLoading(false); }
         };
-        fetchData();
-        const interval = setInterval(fetchData, 2000);
-        return () => clearInterval(interval);
+        fetchInitialData();
     }, [id, isAuthenticated]);
+
+    // Real-time match sync via WebSocket (with 1.5s polling fallback)
+    // This replaces the old 2s heavy polling that fetched everything
+    const lastLocalWriteRef = useRef<number>(0);
+    const handleMatchSync = useCallback((data: any) => {
+        // Skip WS updates that arrive within 500ms of our own writes
+        // to avoid overwriting optimistic local state
+        const timeSinceWrite = Date.now() - lastLocalWriteRef.current;
+        if (timeSinceWrite < 500) return;
+
+        setMatch(prev => {
+            if (!prev) return prev;
+            return { ...prev, ...data };
+        });
+    }, []);
+
+    useMatchSubscription({
+        matchId: id || null,
+        fields: ['*', 'home_team.*', 'away_team.*'],
+        skip: !isAuthenticated,
+        onData: handleMatchSync,
+        fallbackInterval: 1500,
+    });
 
     // Timer Logic
     useEffect(() => {
@@ -254,6 +276,7 @@ export default function ControlMXPage() {
         setMatch(prev => prev ? ({ ...prev, timer_seconds: newTimer, gamestate: newGamestate }) : null);
         if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
         updateDebounceRef.current = setTimeout(async () => {
+            lastLocalWriteRef.current = Date.now();
             await directus.request(updateItem('matches', currentMatch.id, { timer_seconds: newTimer, gamestate: newGamestate }));
         }, 300);
     };
@@ -274,6 +297,7 @@ export default function ControlMXPage() {
             updateObj.gamestate = { ...match.gamestate, shot_clock: { ...match.gamestate.shot_clock, started_at: nowIso } };
         }
         setMatch(prev => ({ ...prev!, ...updateObj }));
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, updateObj));
     };
 
@@ -282,6 +306,7 @@ export default function ControlMXPage() {
         const newShotClock = { seconds, started_at: match.status === 'live' ? new Date().toISOString() : null };
         const newGamestate = { ...match.gamestate, shot_clock: newShotClock };
         setMatch(prev => ({ ...prev!, gamestate: newGamestate }));
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, { gamestate: newGamestate }));
     };
 
@@ -329,6 +354,7 @@ export default function ControlMXPage() {
         const newGamestate = { ...match.gamestate, player_stats: updatedStats, [foulField]: newTeamFouls, events: updatedEvents };
         setMatch(prev => ({ ...prev!, [scoreField]: newScore, gamestate: newGamestate }));
         try {
+            lastLocalWriteRef.current = Date.now();
             await directus.request(updateItem('matches', match.id, { [scoreField]: newScore, gamestate: newGamestate }));
             setView('main'); setActivePlayer(null);
         } catch (e) { console.error(e); }
@@ -339,6 +365,7 @@ export default function ControlMXPage() {
         const field = selectedTeam === 'home' ? 'home_timeouts' : 'away_timeouts';
         const newGamestate = { ...match.gamestate, [field]: (match.gamestate?.[field] || 0) + 1 };
         setMatch(prev => ({ ...prev!, gamestate: newGamestate }));
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, { gamestate: newGamestate }));
     };
 
@@ -350,6 +377,7 @@ export default function ControlMXPage() {
         const newOnCourt = getOnCourt().map(p => getStrId(p.id) === subOutId ? subInId : getStrId(p.id));
         const newGS = { ...match.gamestate, [field]: newOnCourt };
         setMatch(prev => ({ ...prev!, gamestate: newGS }));
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, { gamestate: newGS }));
         setView('main'); setActivePlayer(null);
     };
@@ -388,6 +416,7 @@ export default function ControlMXPage() {
         let next = null;
         if (!current) { next = textAds[textAdIndexRef.current].content; textAdIndexRef.current = (textAdIndexRef.current + 1) % textAds.length; }
         setMatch(prev => prev ? ({ ...prev, active_ad_text: next } as any) : null);
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, { active_ad_text: next } as any));
     };
 
@@ -397,6 +426,7 @@ export default function ControlMXPage() {
         let next = null;
         if (!current) { next = videoAds[videoAdIndexRef.current].video; videoAdIndexRef.current = (videoAdIndexRef.current + 1) % videoAds.length; }
         setMatch(prev => prev ? ({ ...prev, active_ad_video: next } as any) : null);
+        lastLocalWriteRef.current = Date.now();
         await directus.request(updateItem('matches', match.id, { active_ad_video: next } as any));
     };
 

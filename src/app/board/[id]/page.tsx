@@ -394,7 +394,7 @@ export default function BoardPage() {
         fields: ['*', 'animations.scoring_animations_id.*'],
         skip: isPreview || !isAuthenticated,
         onData: handleMatchUpdate,
-        fallbackInterval: 3000,
+        fallbackInterval: 1500,
     });
 
     // Score Delta Detector

@@ -59,6 +59,12 @@ services:
       CORS_ENABLED: 'true'
       CORS_ORIGIN: 'https://create.xerex.tech'
       CORS_METHODS: 'GET,POST,PATCH,DELETE'
+
+      # WebSocket for real-time clock sync
+      WEBSOCKETS_ENABLED: 'true'
+      WEBSOCKETS_REST_ENABLED: 'true'
+      WEBSOCKETS_REST_AUTH: 'handshake'
+      WEBSOCKETS_REST_AUTH_TIMEOUT: '15'
       
       # Reverse Proxy
       VIRTUAL_HOST: score.xerex.tech

@@ -26,7 +26,7 @@ export function useMatchSubscription({
     fields = ['*'],
     skip = false,
     onData,
-    fallbackInterval = 3000,
+    fallbackInterval = 1500,
 }: UseMatchSubscriptionOptions) {
     const wsActiveRef = useRef(false);
     const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);

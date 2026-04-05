@@ -86,7 +86,7 @@ export default function BoardShotPage() {
         fields: ['*', 'sport.*', 'board.*'],
         skip: !id,
         onData: handleMatchUpdate,
-        fallbackInterval: 3000,
+        fallbackInterval: 1500,
     });
 
     // Timer Tick Logic (with anti-jump support)
