@@ -62,6 +62,9 @@ export default function BoardPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [scale, setScale] = useState(1);
     const [localTimer, setLocalTimer] = useState(0);
+    const prevStatusRef = useRef<string | null>(null);
+    const frozenTimerRef = useRef<number | null>(null);
+    const frozenShotClockRef = useRef<number | null>(null);
 
     // Score Animation State
     const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number, config: any} | null>(null);
@@ -102,7 +105,11 @@ export default function BoardPage() {
                 const startedAt = new Date(match.timer_started_at).getTime();
                 const elapsedMs = now - startedAt;
                 // @ts-ignore
-                setLocalTimer(Math.max(0, match.timer_seconds - (elapsedMs / 1000)));
+                const calculated = Math.max(0, match.timer_seconds - (elapsedMs / 1000));
+                setLocalTimer(calculated);
+                // Clear frozen values once running
+                frozenTimerRef.current = null;
+                frozenShotClockRef.current = null;
                 
                 // Shot Clock Live Sync
                 // @ts-ignore
@@ -114,16 +121,28 @@ export default function BoardPage() {
                     setShotClock(Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs / 1000)));
                 }
             } else {
-                // @ts-ignore
-                setLocalTimer(match.timer_seconds || 0);
-                // @ts-ignore
-                if (match?.gamestate?.shot_clock?.seconds !== undefined) {
-                    // @ts-ignore
-                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
+                // Paused: if we have a frozen value from the live→paused transition, use it
+                if (frozenTimerRef.current !== null) {
+                    setLocalTimer(frozenTimerRef.current);
                 } else {
-                    setShotClock(null);
+                    // @ts-ignore
+                    setLocalTimer(match.timer_seconds || 0);
+                }
+                if (frozenShotClockRef.current !== null) {
+                    setShotClock(frozenShotClockRef.current);
+                } else {
+                    // @ts-ignore
+                    if (match?.gamestate?.shot_clock?.seconds !== undefined) {
+                        // @ts-ignore
+                        setShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
+                    } else {
+                        setShotClock(null);
+                    }
                 }
             }
+
+            // Track status for transition detection
+            prevStatusRef.current = match.status;
         };
 
         updateTimer();
@@ -340,10 +359,33 @@ export default function BoardPage() {
     }, [id, isAuthenticated, isPreview]);
 
     // Real-time updates via WebSocket (with 3s polling fallback)
+    // Anti-jump: when live→paused, freeze the local timer at current position
     const handleMatchUpdate = useCallback((data: any) => {
         setMatch(prev => {
             if (!prev) return prev;
-            return { ...prev, ...data };
+            const merged = { ...prev, ...data };
+
+            // Detect live → paused transition
+            const wasLive = prev.status === 'live';
+            const nowPaused = merged.status === 'paused';
+
+            if (wasLive && nowPaused) {
+                // Freeze clocks at their current LOCAL values to prevent jump
+                // The timer tick effect will use these frozen values
+                const now = Date.now();
+                if (prev.timer_started_at) {
+                    const startedAt = new Date(prev.timer_started_at).getTime();
+                    const elapsed = (now - startedAt) / 1000;
+                    frozenTimerRef.current = Math.max(0, (prev.timer_seconds || 0) - elapsed);
+                }
+                if (prev.gamestate?.shot_clock?.started_at) {
+                    const scStartedAt = new Date(prev.gamestate.shot_clock.started_at).getTime();
+                    const scElapsed = (now - scStartedAt) / 1000;
+                    frozenShotClockRef.current = Math.max(0, (prev.gamestate.shot_clock.seconds || 0) - scElapsed);
+                }
+            }
+
+            return merged;
         });
     }, []);
 

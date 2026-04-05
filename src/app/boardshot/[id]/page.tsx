@@ -16,6 +16,8 @@ export default function BoardShotPage() {
     const [localTimer, setLocalTimer] = useState<number>(0);
     const [shotClock, setShotClock] = useState<number | null>(null);
     const [scale, setScale] = useState(1);
+    const frozenTimerRef = useRef<number | null>(null);
+    const frozenShotClockRef = useRef<number | null>(null);
     
     // Initial Fetch
     useEffect(() => {
@@ -48,10 +50,34 @@ export default function BoardShotPage() {
     }, [id]);
 
     // Real-time updates via WebSocket (with 3s polling fallback)
+    // Anti-jump: when live→paused, freeze the local timer at current position
     const handleMatchUpdate = useCallback((data: any) => {
         setMatch(prev => {
             if (!prev) return prev;
-            return { ...prev, ...data };
+            const merged = { ...prev, ...data };
+
+            // Detect live → paused transition
+            const wasLive = prev.status === 'live';
+            const nowPaused = merged.status === 'paused';
+
+            if (wasLive && nowPaused) {
+                const now = Date.now();
+                if (prev.timer_started_at) {
+                    const startedAt = new Date(prev.timer_started_at).getTime();
+                    const elapsed = (now - startedAt) / 1000;
+                    frozenTimerRef.current = Math.max(0, (prev.timer_seconds || 0) - elapsed);
+                }
+                let gs: any = prev.gamestate;
+                if (typeof gs === 'string') { try { gs = JSON.parse(gs); } catch (_) { gs = {}; } }
+                const sc = gs?.shot_clock || gs?.shotClock;
+                if (sc && typeof sc === 'object' && sc.started_at) {
+                    const scStartedAt = new Date(sc.started_at).getTime();
+                    const scElapsed = (now - scStartedAt) / 1000;
+                    frozenShotClockRef.current = Math.max(0, (sc.seconds || 0) - scElapsed);
+                }
+            }
+
+            return merged;
         });
     }, []);
 
@@ -63,7 +89,7 @@ export default function BoardShotPage() {
         fallbackInterval: 3000,
     });
 
-    // Timer Tick Logic (Identical to Main Board)
+    // Timer Tick Logic (with anti-jump support)
     useEffect(() => {
         if (!match) return;
 
@@ -83,12 +109,20 @@ export default function BoardShotPage() {
                     const elapsedMs = now - startedAt;
                     setLocalTimer(Math.max(0, (match.timer_seconds || 0) - (elapsedMs / 1000)));
                 }
+                // Clear frozen values once running
+                frozenTimerRef.current = null;
+                frozenShotClockRef.current = null;
             } else {
-                setLocalTimer(match.timer_seconds || 0);
+                // Paused: use frozen value if available, else server value
+                if (frozenTimerRef.current !== null) {
+                    setLocalTimer(frozenTimerRef.current);
+                } else {
+                    setLocalTimer(match.timer_seconds || 0);
+                }
             }
 
-            // Shot Clock Logic (Handling nested object structure as seen in /board)
-            const sc = gs?.shot_clock || gs?.shotClock; // Support both cases
+            // Shot Clock Logic
+            const sc = gs?.shot_clock || gs?.shotClock;
             
             if (sc && typeof sc === 'object') {
                 if (sc.started_at && match.status === 'live') {
@@ -98,7 +132,12 @@ export default function BoardShotPage() {
                         setShotClock(Math.max(0, (sc.seconds || 0) - (scElapsedMs / 1000)));
                     }
                 } else {
-                    setShotClock(Math.max(0, sc.seconds || 0));
+                    // Paused: use frozen value if available
+                    if (frozenShotClockRef.current !== null) {
+                        setShotClock(frozenShotClockRef.current);
+                    } else {
+                        setShotClock(Math.max(0, sc.seconds || 0));
+                    }
                 }
             } else if (typeof sc === 'number') {
                 setShotClock(sc);
