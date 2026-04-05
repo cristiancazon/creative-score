@@ -3,9 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { directus } from '@/lib/directus';
 import { useMatchSubscription } from '@/hooks/useMatchSubscription';
+import { useTimerEngine } from '@/hooks/useTimerEngine';
+import { PlayerGrid } from '@/components/control/PlayerGrid';
 import { readItem, updateItem, readMe, readItems } from '@directus/sdk';
 import { Match, Player } from '@/types/directus';
-import { Play, Pause, ChevronLeft, ChevronRight, X, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { useParams, useRouter } from 'next/navigation';
 import useWebSocket from 'react-use-websocket';
 import { toPng } from 'html-to-image';
@@ -36,8 +38,7 @@ export default function ControlMXPage() {
     const [selectedTeam, setSelectedTeam] = useState<'home' | 'away'>('home');
     const [view, setView] = useState<ViewState>('main');
     const [activePlayer, setActivePlayer] = useState<any | null>(null);
-    const [localTimer, setLocalTimer] = useState(0);
-    const [localShotClock, setLocalShotClock] = useState<number | null>(null);
+    // Timer state is now managed by useTimerEngine
 
     // Ads State
     const [textAds, setTextAds] = useState<any[]>([]);
@@ -228,34 +229,8 @@ export default function ControlMXPage() {
         fallbackInterval: 1500,
     });
 
-    // Timer Logic
-    useEffect(() => {
-        const update = () => {
-            if (!match) return;
-            if (match.status === 'live' && match.timer_started_at) {
-                const now = new Date().getTime();
-                const elapsedMs = now - new Date(match.timer_started_at).getTime();
-                setLocalTimer(Math.max(0, match.timer_seconds - (elapsedMs / 1000)));
-                
-                // Shot Clock Sync
-                if (match?.gamestate?.shot_clock?.started_at && match?.gamestate?.shot_clock?.seconds !== undefined) {
-                    const scStartedAt = new Date(match.gamestate.shot_clock.started_at).getTime();
-                    const scElapsedMs = now - scStartedAt;
-                    setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs / 1000)));
-                } else {
-                    if (match?.gamestate?.shot_clock?.seconds !== undefined) setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
-                }
-            } else {
-                setLocalTimer(match.timer_seconds);
-                if (match?.gamestate?.shot_clock?.seconds !== undefined) {
-                    setLocalShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
-                } else setLocalShotClock(null);
-            }
-        };
-        update();
-        const interval = setInterval(update, 100);
-        return () => clearInterval(interval);
-    }, [match]);
+    // ─── Timer engine hook (100ms tick, anti-jump, shot clock) ──────────────
+    const { localTimer, shotClock: localShotClock, formatShotClock } = useTimerEngine({ match });
 
     const handleClockAdjustment = (option: 'minutos' | 'segundos' | 'posesion' | 'posesion_dec', amount: number) => {
         if (!matchRef.current) return;
@@ -272,7 +247,6 @@ export default function ControlMXPage() {
             const currentSc = currentMatch.gamestate?.shot_clock?.seconds ?? 24;
             newGamestate.shot_clock = { seconds: Math.max(0, Math.round((currentSc + (amount * 0.1)) * 10) / 10), started_at: null };
         }
-        setLocalTimer(newTimer);
         setMatch(prev => prev ? ({ ...prev, timer_seconds: newTimer, gamestate: newGamestate }) : null);
         if (updateDebounceRef.current) clearTimeout(updateDebounceRef.current);
         updateDebounceRef.current = setTimeout(async () => {
@@ -477,78 +451,23 @@ export default function ControlMXPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 grid-rows-3 gap-4 flex-1 max-w-[600px] mx-auto w-full mb-8">
-                {view === 'main' && (
-                    <>
-                        {onCourt.map((p, idx) => (
-                            <button key={p.id} id={`mx_btn_${idx}`} onClick={() => handleGridAction(idx)} className={`rounded-[2.5rem] flex flex-col items-center justify-center relative border-2 ${selectedTeam === 'home' ? 'bg-purple-900/20 border-purple-500/30' : 'bg-green-900/20 border-green-500/30'}`}>
-                                <span className={`text-5xl font-black mb-1 ${selectedTeam === 'home' ? 'text-purple-400' : 'text-green-400'}`}>{p.number}</span>
-                                <span className="text-[10px] uppercase font-black opacity-50 truncate w-full px-4 text-center">{p.name}</span>
-                                {match.gamestate?.player_stats?.[p.id]?.fouls > 0 && <div className="absolute top-4 right-4 text-red-500 font-black text-xs">F:{match.gamestate.player_stats[p.id].fouls}</div>}
-                            </button>
-                        ))}
-                        {Array.from({ length: 5 - onCourt.length }).map((_, i) => <div key={i} className="bg-white/5 border-2 border-white/5 rounded-[2.5rem] flex items-center justify-center"><span className="opacity-10 font-black">EMPTY</span></div>)}
-                        <button id="mx_btn_5" onClick={() => handleGridAction(5)} className="rounded-[2.5rem] border-2 bg-white/5 border-white/10 flex flex-col items-center justify-center"><div className="flex gap-1 mb-2">{[1, 2, 3].map(i => <div key={i} className={`w-2 h-2 rounded-full ${i <= (match.gamestate?.[selectedTeam==='home'?'home_timeouts':'away_timeouts']||0)?'bg-red-500':'bg-white/10'}`}></div>)}</div><span className="text-[10px] font-black opacity-50">TIMEOUT</span></button>
-                        <button id="mx_btn_6" onClick={() => handleGridAction(6)} className={`rounded-[2.5rem] border-2 flex flex-col items-center justify-center ${isRunning ? 'bg-amber-500/10 border-amber-500/30 text-amber-500' : 'bg-blue-500/10 border-blue-500/30 text-blue-500'}`}>{isRunning ? <Pause size={48} fill="currentColor" /> : <Play size={48} fill="currentColor" className="ml-2" />}<span className="text-[10px] font-black uppercase mt-1">{isRunning ? 'PAUSE' : 'PLAY'}</span></button>
-                        <button id="mx_btn_7" onClick={() => handleGridAction(7)} className="rounded-[2.5rem] border-2 bg-red-900/10 border-red-500/30 text-red-500 flex items-center justify-center"><span className="text-6xl font-black">14</span></button>
-                        <button id="mx_btn_8" onClick={() => handleGridAction(8)} className="rounded-[2.5rem] border-2 bg-red-900/10 border-red-500/30 text-red-500 flex items-center justify-center"><span className="text-6xl font-black">24</span></button>
-                    </>
-                )}
-                {view === 'actions' && (
-                    <>
-                        {[1, 2, 3, -1, -2, -3].map((v, i) => (
-                            <button key={i} id={`mx_btn_${i}`} onClick={() => handlePlayerAction('pts', v)} className={`rounded-[2.5rem] border-2 flex items-center justify-center ${v>0?'bg-blue-500/10 border-blue-500/30 text-blue-400':'bg-red-500/10 border-red-500/30 text-red-500'}`}><span className="text-6xl font-black">{v > 0 ? `+${v}` : v}</span></button>
-                        ))}
-                        <button id="mx_btn_6" onClick={() => handlePlayerAction('foul', 1)} className="rounded-[2.5rem] border-2 bg-orange-500/10 border-orange-500/30 text-orange-400 flex items-center justify-center font-black text-5xl">+F</button>
-                        <button id="mx_btn_7" onClick={() => handlePlayerAction('foul', -1)} className="rounded-[2.5rem] border-2 bg-orange-900/10 border-orange-900/30 text-orange-900 flex items-center justify-center font-black text-5xl">-F</button>
-                        <button id="mx_btn_8" onClick={() => setView('substitution')} className="rounded-[2.5rem] border-2 bg-white/10 border-white/20 text-white flex items-center justify-center font-black text-6xl">C</button>
-                    </>
-                )}
-                {view === 'substitution' && bench.slice(0,9).map((p, idx) => (
-                    <button key={p.id} id={`mx_btn_${idx}`} onClick={() => confirmSubstitution(p.id)} className="rounded-[2.5rem] border-2 bg-blue-500/10 border-blue-500/30 flex flex-col items-center justify-center"><span className="text-5xl font-black text-blue-400">{p.number}</span><span className="text-[10px] font-black opacity-50 uppercase truncate w-full px-2 text-center">{p.name}</span></button>
-                ))}
-            </div>
+            <PlayerGrid
+                view={view}
+                onCourt={onCourt}
+                bench={bench}
+                selectedTeam={selectedTeam}
+                isRunning={isRunning}
+                gamestate={match.gamestate}
+                onGridAction={handleGridAction}
+                onPlayerAction={handlePlayerAction}
+                onSubstitution={confirmSubstitution}
+                onSetView={setView}
+            />
 
             <div className="flex justify-between gap-6 mt-auto">
                 <button onClick={() => setSelectedTeam('home')} className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-300 font-black text-2xl ${selectedTeam === 'home' ? 'bg-purple-600 border-purple-400' : 'bg-white/5 border-transparent opacity-30 text-white'}`}><ChevronLeft size={40} strokeWidth={4} /> LOCAL</button>
                 {view !== 'main' && <button onClick={() => { setView('main'); setActivePlayer(null); }} className="w-20 h-20 rounded-[2rem] bg-white/10 flex items-center justify-center"><X size={40} strokeWidth={4} /></button>}
                 <button onClick={() => setSelectedTeam('away')} className={`flex-1 flex items-center justify-center gap-4 h-20 rounded-[2rem] border-2 transition-all duration-300 font-black text-2xl ${selectedTeam === 'away' ? 'bg-green-600 border-green-400' : 'bg-white/5 border-transparent opacity-30 text-white'}`}>VISITANTE <ChevronRight size={40} strokeWidth={4} /></button>
-            </div>
-
-            <div className="fixed bottom-[-2000px] left-[-2000px] grid grid-cols-3 gap-0 opacity-100 pointer-events-none p-0 m-0">
-                {Array.from({ length: 9 }).map((_, i) => (
-                    <div key={i} id={`mx_icon_capture_${i}`} className="w-[200px] h-[200px] bg-black flex items-center justify-center overflow-hidden">
-                         <div className="w-full h-full flex flex-col items-center justify-center text-center">
-                             {view === 'main' && (
-                                <>
-                                    {i < 5 && onCourt[i] ? (
-                                        <div className="flex flex-col items-center"><span className={`text-9xl font-black leading-none ${selectedTeam === 'home' ? 'text-purple-500' : 'text-green-500'}`}>{onCourt[i].number}</span><span className="text-[20px] font-black text-white/50 uppercase">{onCourt[i].name?.substring(0,8)}</span></div>
-                                    ) : i === 5 ? (
-                                        <div className="flex flex-col items-center"><div className="w-16 h-16 rounded-full border-8 border-red-500 flex items-center justify-center"><div className="w-6 h-6 rounded-full bg-red-500"></div></div><span className="text-[24px] font-black text-red-500 uppercase mt-2">TIME</span></div>
-                                    ) : i === 6 ? (
-                                        <div className="flex flex-col items-center">{isRunning ? <Pause size={100} className="text-amber-500" fill="currentColor"/> : <Play size={100} className="text-blue-500 ml-4" fill="currentColor"/>}<span className={`text-[24px] font-black uppercase mt-2 ${isRunning ? 'text-amber-500':'text-blue-500'}`}>{isRunning?'PAUSE':'PLAY'}</span></div>
-                                    ) : i === 7 ? (
-                                        <div className="flex flex-col items-center"><span className="text-[120px] font-black text-red-500 leading-none">14</span><span className="text-[20px] font-black text-red-500/50 uppercase">SHOT</span></div>
-                                    ) : i === 8 ? (
-                                        <div className="flex flex-col items-center"><span className="text-[120px] font-black text-red-500 leading-none">24</span><span className="text-[20px] font-black text-red-500/50 uppercase">SHOT</span></div>
-                                    ) : null}
-                                </>
-                             )}
-                             {view === 'actions' && (
-                                <div className="flex flex-col items-center">
-                                     {i < 3 ? <span className="text-[120px] font-black text-blue-500">+{i+1}</span> 
-                                     : i < 6 ? <span className="text-[120px] font-black text-red-500">-{i-2}</span>
-                                     : i === 6 ? <span className="text-[120px] font-black text-orange-500">+F</span>
-                                     : i === 7 ? <span className="text-[120px] font-black text-orange-900">-F</span>
-                                     : <span className="text-9xl font-black text-white">SUB</span>}
-                                </div>
-                             )}
-                             {view === 'substitution' && bench[i] && (
-                                <div className="flex flex-col items-center"><span className="text-9xl font-black text-blue-500 leading-none">{bench[i].number}</span><span className="text-[20px] font-black text-white/50 uppercase">{bench[i].name?.substring(0,8)}</span></div>
-                             )}
-                        </div>
-                    </div>
-                ))}
             </div>
 
             <style jsx global>{`

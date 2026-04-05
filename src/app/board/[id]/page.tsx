@@ -3,12 +3,15 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { directus } from '@/lib/directus';
-import { useMatchSubscription } from '@/hooks/useMatchSubscription';
+import { useMatchSync } from '@/hooks/useMatchSync';
+import { useTimerEngine } from '@/hooks/useTimerEngine';
+import { ScoreOverlay } from '@/components/board/ScoreOverlay';
 
-import { readItem, readMe, readItems } from '@directus/sdk';
+import { readItem, readItems } from '@directus/sdk';
 import { Match, Board, Team } from '@/types/directus';
 import { Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 
 const DEFAULT_2PT_CONFIG = {
     overlay: { background: "rgba(0,0,0,0.9)", backdropBlur: "10px" },
@@ -45,29 +48,13 @@ export default function BoardPage() {
     const id = params?.id as string;
     const isPreview = searchParams.get('preview') === 'true';
 
-    const [match, setMatch] = useState<Match | null>(null);
     const [boardConfig, setBoardConfig] = useState<Board | null>(null);
-
-    // Derived state for cleaner UI
-    const [homeTeam, setHomeTeam] = useState<Team | null>(null);
-    const [awayTeam, setAwayTeam] = useState<Team | null>(null);
-    const [homePlayers, setHomePlayers] = useState<any[]>([]);
-    const [awayPlayers, setAwayPlayers] = useState<any[]>([]);
-
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-
-
-
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [scale, setScale] = useState(1);
-    const [localTimer, setLocalTimer] = useState(0);
-    const prevStatusRef = useRef<string | null>(null);
-    const frozenTimerRef = useRef<number | null>(null);
-    const frozenShotClockRef = useRef<number | null>(null);
 
     // Score Animation State
     const [recentScore, setRecentScore] = useState<{player: any, team: any, points: number, config: any} | null>(null);
+    const prevStatsRef = useRef<any>(null);
+
     // Helper to fix JSON-specific string values (like "Infinity")
     const fixConfig = (obj: any): any => {
         if (typeof obj !== 'object' || obj === null) {
@@ -76,326 +63,81 @@ export default function BoardPage() {
         }
         if (Array.isArray(obj)) return obj.map(fixConfig);
         const fixed: any = {};
-        for (const key in obj) {
-            fixed[key] = fixConfig(obj[key]);
-        }
+        for (const key in obj) { fixed[key] = fixConfig(obj[key]); }
         return fixed;
     };
 
-    const prevStatsRef = useRef<any>(null);
-
     // Ultra-safe comparison helper
     const getStrId = (idInput: any) => {
-        if (!idInput) return "";
-        if (typeof idInput === 'object') return String(idInput.id || "");
+        if (!idInput) return '';
+        if (typeof idInput === 'object') return String(idInput.id || '');
         return String(idInput);
     };
 
-    const [shotClock, setShotClock] = useState<number | null>(null);
+    // ─── Shared match sync hook (auth + initial fetch + WebSocket) ───────────
+    const { match, setMatch, loading, error, isAuthenticated, homePlayers, awayPlayers, homeTeam, awayTeam } = useMatchSync({
+        matchId: isPreview ? null : (id || null),
+        extraFields: ['animations.scoring_animations_id.*'],
+        skip: isPreview,
+        onAuthFail: () => router.push(`/login?redirect=/board/${id}${isPreview ? '?preview=true' : ''}`),
+    });
 
-    // Sync local timer with match state
+    // ─── Timer engine hook (100ms tick, anti-jump, shot clock) ──────────────
+    const { localTimer, shotClock, formatTime } = useTimerEngine({ match });
+
+
     useEffect(() => {
-        if (!match) return;
-
-        const updateTimer = () => {
-            // @ts-ignore
-            if (match.status === 'live' && match.timer_started_at) {
-                const now = new Date().getTime();
-                // @ts-ignore
-                const startedAt = new Date(match.timer_started_at).getTime();
-                const elapsedMs = now - startedAt;
-                // @ts-ignore
-                const calculated = Math.max(0, match.timer_seconds - (elapsedMs / 1000));
-                setLocalTimer(calculated);
-                // Clear frozen values once running
-                frozenTimerRef.current = null;
-                frozenShotClockRef.current = null;
-                
-                // Shot Clock Live Sync
-                // @ts-ignore
-                if (match?.gamestate?.shot_clock?.started_at && match?.gamestate?.shot_clock?.seconds !== undefined) {
-                    // @ts-ignore
-                    const scStartedAt = new Date(match.gamestate.shot_clock.started_at).getTime();
-                    const scElapsedMs = now - scStartedAt;
-                    // @ts-ignore
-                    setShotClock(Math.max(0, match.gamestate.shot_clock.seconds - (scElapsedMs / 1000)));
-                }
-            } else {
-                // Paused: if we have a frozen value from the live→paused transition, use it
-                if (frozenTimerRef.current !== null) {
-                    setLocalTimer(frozenTimerRef.current);
-                } else {
-                    // @ts-ignore
-                    setLocalTimer(match.timer_seconds || 0);
-                }
-                if (frozenShotClockRef.current !== null) {
-                    setShotClock(frozenShotClockRef.current);
-                } else {
-                    // @ts-ignore
-                    if (match?.gamestate?.shot_clock?.seconds !== undefined) {
-                        // @ts-ignore
-                        setShotClock(Math.max(0, match.gamestate.shot_clock.seconds));
-                    } else {
-                        setShotClock(null);
-                    }
-                }
+        if (!isPreview || !id) return;
+        const loadPreview = async () => {
+            try {
+                const boardData = await directus.request(readItem('boards', id));
+                setBoardConfig(boardData);
+                setMatch({
+                    id: 'preview', status: 'live',
+                    start_time: new Date().toISOString(),
+                    current_period: 2, timer_seconds: 725, timer_started_at: null,
+                    home_score: 88, away_score: 86,
+                    gamestate: { home_fouls: 3, away_fouls: 2, home_timeouts: 2, away_timeouts: 1 },
+                    sport: { name: 'Basketball' } as any,
+                    home_team: { name: 'Lakers', primary_color: '#552583' } as any,
+                    away_team: { name: 'Celtics', primary_color: '#007A33' } as any
+                } as Match);
+            } catch (e) {
+                console.error('Preview load failed:', e);
             }
-
-            // Track status for transition detection
-            prevStatusRef.current = match.status;
         };
+        loadPreview();
+    }, [isPreview, id, setMatch]);
 
-        updateTimer();
-        const interval = setInterval(updateTimer, 100);
-        return () => clearInterval(interval);
-    }, [match]);
-
-    // Auto-scale to fit screen
     useEffect(() => {
         if (!boardConfig?.layout) return;
-
         const handleResize = () => {
-            // @ts-ignore
             const width = boardConfig.layout.canvas?.width || 640;
-            // @ts-ignore
             const height = boardConfig.layout.canvas?.height || 360;
-
-            const scaleX = window.innerWidth / width;
-            const scaleY = window.innerHeight / height;
-
-            // Choose the smaller scale to ensure it fits entirely
-            setScale(Math.min(scaleX, scaleY));
+            setScale(Math.min(window.innerWidth / width, window.innerHeight / height));
         };
-
-        handleResize(); // Initial calc
+        handleResize();
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, [boardConfig]);
 
-
-    // Check Auth
     useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for SDK storage sync
-                const token = await directus.getToken();
-
-                if (!token) {
-                    // If preview, we might allow public access if the board is public? 
-                    // But user requested "role of logged in user". 
-                    // If preview, we still need to fetch the BOARD config. 
-                    // Let's assume preview matches don't need auth, but Board config MIGHT.
-                    // However, to keep it simple and consistent with user request:
-                    // If no token -> login.
-                    // EXCEPT if we decide to allow public preview. 
-                    // For now, consistent behavior:
-                    router.push(`/login?redirect=/board/${id}${isPreview ? '?preview=true' : ''}`);
-                    return;
-                }
-
-                // Verify token is valid by fetching ME
-                await directus.request(readMe());
-                setIsAuthenticated(true);
-            } catch (e) {
-                console.error("Auth check failed:", e);
-                router.push(`/login?redirect=/board/${id}${isPreview ? '?preview=true' : ''}`);
-            }
-        };
-        checkAuth();
-    }, [router, id, isPreview]);
-
-    // Initial Load
-    useEffect(() => {
-        // Validation: Preview needs ID, Live needs ID & Auth
-        if (!id) return;
-        if (!isPreview && !isAuthenticated) return; // Assuming isAuthenticated is managed elsewhere
-
-        const fetchData = async () => {
-            // PREVIEW MODE: ID is Board ID
-            if (isPreview) {
-                try {
-                    const boardData = await directus.request(readItem('boards', id));
-                    // @ts-ignore
-                    setBoardConfig(boardData);
-
-                    // Dummy Match Data for Design
-                    setMatch({
-                        id: 'preview',
-                        status: 'live',
-                        start_time: new Date().toISOString(),
-                        current_period: 2,
-                        timer_seconds: 725, // 12:05
-                        timer_started_at: null,
-                        home_score: 88,
-                        away_score: 86,
-                        gamestate: {
-                            home_fouls: 3,
-                            away_fouls: 2,
-                            home_timeouts: 2,
-                            away_timeouts: 1
-                        },
-                        sport: { name: 'Basketball' } as any,
-                        home_team: { name: 'Lakers', primary_color: '#552583' } as any,
-                        away_team: { name: 'Celtics', primary_color: '#007A33' } as any
-                    } as Match);
-                    setHomeTeam({ name: 'Lakers', primary_color: '#552583' } as any);
-                    setAwayTeam({ name: 'Celtics', primary_color: '#007A33' } as any);
-                    // Fallback Generation
-                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
-                        id: `temp_${teamId}_${i + 4}`,
-                        name: `Player ${i + 4}`,
-                        number: i + 4,
-                        team: teamId,
-                        temp: true
-                    }));
-
-                    setHomePlayers(generateRoster('lakers'));
-                    setAwayPlayers(generateRoster('celtics'));
-
-                    setLoading(false);
-                } catch (e) {
-                    console.error("Preview load failed:", e);
-                    setError("Failed to load Board Preview");
-                    setLoading(false);
-                }
-                return;
-            }
-
-            // LIVE MODE: ID is Match ID
-            try {
-                const matchData = await directus.request(readItem('matches', id as string, {
-                    fields: ['*' as any, 'home_team.*' as any, 'away_team.*' as any, 'board.*' as any, 'animations.scoring_animations_id.*' as any]
-                })) as any;
-
-                setMatch(matchData);
-                setHomeTeam(matchData.home_team);
-                setAwayTeam(matchData.away_team);
-
-                // If match has a specific board assigned, use it. Otherwise use defaults.
-                if (matchData.board) {
-                    setBoardConfig(matchData.board);
-                } else {
-                    // Fallback default config if no board selected
-                    setBoardConfig({
-                        id: 'default',
-                        name: 'Default',
-                        show_timer: true,
-                        show_period: true,
-                        show_fouls: true,
-                        show_timeouts: true,
-                        show_players: true,
-                        show_player_stats: true,
-                        background_color: '#000000',
-                        text_color: '#ffffff',
-                        primary_color_home: matchData.home_team?.primary_color || '#ef4444',
-                        primary_color_away: matchData.away_team?.primary_color || '#3b82f6',
-                        label_period: 'PERIOD',
-                        label_fouls: 'FOULS'
-                    } as any);
-                }
-
-                // Robust ID Extraction
-                const homeId = matchData.home_team ? String(typeof matchData.home_team === 'object' ? matchData.home_team.id : matchData.home_team) : null;
-                const awayId = matchData.away_team ? String(typeof matchData.away_team === 'object' ? matchData.away_team.id : matchData.away_team) : null;
-
-                if (homeId && awayId) {
-                    const playersData = await directus.request(readItems('players', {
-                        filter: {
-                            _or: [
-                                { team: { _eq: homeId } },
-                                { team: { _eq: awayId } }
-                            ]
-                        },
-                        limit: 100
-                    })) as any[];
-
-                    // Fallback Generation
-                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
-                        id: `temp_${teamId}_${i + 4}`,
-                        name: `Player ${i + 4}`,
-                        number: i + 4,
-                        team: teamId,
-                        temp: true
-                    }));
-
-                    // String-safe local filtering
-                    const hReal = playersData.filter((p: any) => {
-                        const pTeamId = String(typeof p.team === 'object' ? p.team.id : p.team);
-                        return pTeamId === homeId;
-                    });
-                    const aReal = playersData.filter((p: any) => {
-                        const pTeamId = String(typeof p.team === 'object' ? p.team.id : p.team);
-                        return pTeamId === awayId;
-                    });
-
-                    const hPlayers = hReal.length > 0 ? hReal.sort((a: any, b: any) => a.number - b.number) : generateRoster(homeId);
-                    const aPlayers = aReal.length > 0 ? aReal.sort((a: any, b: any) => a.number - b.number) : generateRoster(awayId);
-
-                    setHomePlayers(hPlayers);
-                    setAwayPlayers(aPlayers);
-                }
-                else if (!matchData.home_team && !matchData.away_team) {
-                    // Even if no teams, generate something to avoid empty state if possible
-                    const generateRoster = (teamId: string) => Array.from({ length: 12 }, (_, i) => ({
-                        id: `temp_${teamId}_${i + 4}`,
-                        name: `Player ${i + 4}`,
-                        number: i + 4,
-                        team: teamId,
-                        temp: true
-                    }));
-                    setHomePlayers(generateRoster('home'));
-                    setAwayPlayers(generateRoster('away'));
-                }
-
-                setLoading(false);
-            } catch (err) {
-                console.error("Error fetching board data:", err);
-                setError("Failed to load match data. It may not exist.");
-                setLoading(false);
-            }
-        };
-
-        fetchData();
-    }, [id, isAuthenticated, isPreview]);
-
-    // Real-time updates via WebSocket (with 3s polling fallback)
-    // Anti-jump: when live→paused, freeze the local timer at current position
-    const handleMatchUpdate = useCallback((data: any) => {
-        setMatch(prev => {
-            if (!prev) return prev;
-            const merged = { ...prev, ...data };
-
-            // Detect live → paused transition
-            const wasLive = prev.status === 'live';
-            const nowPaused = merged.status === 'paused';
-
-            if (wasLive && nowPaused) {
-                // Freeze clocks at their current LOCAL values to prevent jump
-                // The timer tick effect will use these frozen values
-                const now = Date.now();
-                if (prev.timer_started_at) {
-                    const startedAt = new Date(prev.timer_started_at).getTime();
-                    const elapsed = (now - startedAt) / 1000;
-                    frozenTimerRef.current = Math.max(0, (prev.timer_seconds || 0) - elapsed);
-                }
-                if (prev.gamestate?.shot_clock?.started_at) {
-                    const scStartedAt = new Date(prev.gamestate.shot_clock.started_at).getTime();
-                    const scElapsed = (now - scStartedAt) / 1000;
-                    frozenShotClockRef.current = Math.max(0, (prev.gamestate.shot_clock.seconds || 0) - scElapsed);
-                }
-            }
-
-            return merged;
-        });
-    }, []);
-
-    useMatchSubscription({
-        matchId: id || null,
-        fields: ['*', 'animations.scoring_animations_id.*'],
-        skip: isPreview || !isAuthenticated,
-        onData: handleMatchUpdate,
-        fallbackInterval: 1500,
-    });
+        if (!match || isPreview) return;
+        const m = match as any;
+        if (m.board) {
+            setBoardConfig(m.board);
+        } else {
+            setBoardConfig({
+                id: 'default', name: 'Default',
+                show_timer: true, show_period: true, show_fouls: true,
+                show_timeouts: true, show_players: true, show_player_stats: true,
+                background_color: '#000000', text_color: '#ffffff',
+                primary_color_home: m.home_team?.primary_color || '#ef4444',
+                primary_color_away: m.away_team?.primary_color || '#3b82f6',
+                label_period: 'PERIOD', label_fouls: 'FOULS'
+            } as any);
+        }
+    }, [match?.id, isPreview]);
 
     // Score Delta Detector
     useEffect(() => {
@@ -465,79 +207,10 @@ export default function BoardPage() {
     const homeColor = boardConfig.primary_color_home || homeTeam?.primary_color || '#ef4444';
     const awayColor = boardConfig.primary_color_away || awayTeam?.primary_color || '#3b82f6';
 
-    // Timer Display Logic
-    const formatTime = (seconds: number) => {
-        if (seconds < 60 && seconds > 0) return Math.abs(seconds).toFixed(1);
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${m}:${s.toString().padStart(2, '0')}`;
-    };
+    // formatTime is provided by useTimerEngine
 
-    // --- SCORE OVERLAY COMPONENT (DYNAMIC) ---
-    const scoreOverlay = (
-        <AnimatePresence>
-            {recentScore && (
-                <motion.div
-                    initial={recentScore.config.overlay.initial || { opacity: 0 }}
-                    animate={recentScore.config.overlay.animate || { opacity: 1 }}
-                    exit={recentScore.config.overlay.exit || { opacity: 0, transition: { duration: 0.5 } }}
-                    className="absolute inset-0 z-[9999] flex flex-col items-center justify-center pointer-events-none"
-                    style={{ 
-                        background: recentScore.config.overlay.background || 'rgba(0,0,0,0.9)',
-                        backdropFilter: `blur(${recentScore.config.overlay.backdropBlur || '10px'})`
-                    }}
-                >
-                    <motion.div 
-                        initial={recentScore.config.content.initial}
-                        animate={recentScore.config.content.animate}
-                        exit={recentScore.config.content.exit}
-                        transition={recentScore.config.content.transition}
-                        className="text-center flex flex-col items-center p-4 max-w-full"
-                    >
-                        <h2 
-                            className="text-xl md:text-2xl uppercase tracking-[0.3em] font-medium mb-2 text-center"
-                            style={{ color: recentScore.team.primary_color || '#fff' }}
-                        >
-                            {recentScore.team.name}
-                        </h2>
-                        
-                        <h1 className="text-3xl md:text-5xl font-black uppercase text-white mb-4 drop-shadow-2xl text-center leading-tight">
-                            {recentScore.player.name}
-                        </h1>
-
-                        <div className="relative">
-                            <motion.div
-                                initial={recentScore.config.score.initial}
-                                animate={recentScore.config.score.animate}
-                                transition={recentScore.config.score.transition}
-                                className="text-6xl md:text-8xl font-black italic leading-none"
-                                style={{ 
-                                    color: recentScore.team.primary_color || '#fff',
-                                    textShadow: '0 10px 30px rgba(0,0,0,0.5)'
-                                }}
-                            >
-                                +{recentScore.points}
-                            </motion.div>
-
-                            {/* Decorative Elements (Centered or absolute as per JSON) */}
-                            {recentScore.config.elements?.map((el: any, i: number) => (
-                                <motion.div 
-                                    key={`el-${i}`}
-                                    initial={el.initial}
-                                    animate={el.animate}
-                                    exit={el.exit}
-                                    transition={el.transition}
-                                    className="absolute inset-0 flex items-center justify-center text-4xl md:text-6xl pointer-events-none"
-                                >
-                                    {el.value}
-                                </motion.div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    );
+    // --- SCORE OVERLAY ---
+    const scoreOverlayEl = <ScoreOverlay recentScore={recentScore} />;
 
     // --- DYNAMIC RENDERER ---
     if (boardConfig.layout && boardConfig.layout.elements) {
@@ -732,7 +405,7 @@ export default function BoardPage() {
                         );
                     })}
 
-                    {scoreOverlay}
+                    {scoreOverlayEl}
                 </div>
 
                 {/* Text Ad Overlay */}
@@ -983,7 +656,7 @@ export default function BoardPage() {
                 )}
             </AnimatePresence>
 
-            {scoreOverlay}
+            {scoreOverlayEl}
         </div>
     );
 }
