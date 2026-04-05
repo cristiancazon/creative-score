@@ -208,9 +208,326 @@ export const content = {
       email: 'cristian@xerex.tech',
       or: 'Contacta directamente con nosotros',
     },
+  },
+  de: {
+    nav: {
+      features: 'Funktionen',
+      device: 'Gerät',
+      screens: 'Alle Bildschirme',
+      demo: 'Demo anfordern',
+    },
+    hero: {
+      badge: 'Plattform für digitale Anzeigetafeln',
+      title: 'Verwandeln Sie jeden',
+      titleAccent: 'Bildschirm in ein Profi-Board',
+      subtitle:
+        'Creative Score ist eine konfigurierbare digitale Echtzeit-Anzeigetafel, die jedes Display in ein professionelles Sporterlebnis verwandelt — ganz ohne teures Zubehör.',
+      cta: 'Kostenlosen Test anfordern',
+      ctaSecondary: 'Funktionen erkunden',
+    },
+    stats: [
+      { value: '∞', label: 'Kompatible Bildschirme' },
+      { value: '10+', label: 'Unterstützte Sportarten' },
+      { value: '1-click', label: 'Einrichtung & Sync' },
+    ],
+    features: {
+      title: 'Alles, was Sie brauchen,',
+      titleAccent: 'nichts, was Sie nicht brauchen',
+      subtitle:
+        'Creative Score ist auf Geschwindigkeit ausgelegt. Konfigurieren Sie Ihre Anzeigetafel in Sekundenschnelle und verwalten Sie jedes Detail in Echtzeit.',
+      items: [
+        {
+          img: '/img_web/nuevo_dash/canvas_board.jpg',
+          icon: '🎨',
+          title: 'Voll anpassbare Anzeigetafel',
+          desc: 'Gestalten Sie Layout, Farben und Branding passend zu jeder Sportart oder Team-Identität.',
+        },
+        {
+          img: '/img_web/nuevo_dash/edit_match.jpg',
+          icon: '⚡',
+          title: 'Echtzeit-Synchronisierung',
+          desc: 'Punkte, Timer und Ereignisse werden sofort auf allen verbundenen Displays aktualisiert — ohne Verzögerung.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_night.jpg',
+          icon: '🖥️',
+          title: 'Intuitives Admin-Dashboard',
+          desc: 'Verwalten Sie Spiele, Teams und Spieler über eine moderne Oberfläche, die von jedem Gerät aus zugänglich ist.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_light.jpg',
+          icon: '🏆',
+          title: 'Bereit für Multi-Sport',
+          desc: 'Von Basketball und Fußball bis Volleyball und mehr — eine Plattform für alle Sportarten.',
+        },
+        {
+          img: '/img_web/nuevo_dash/teams.jpg',
+          icon: '👥',
+          title: 'Team- & Spieler-Management',
+          desc: 'Erstellen Sie Kader, verfolgen Sie Statistiken und verwalten Sie Auswechslungen ganz einfach.',
+        },
+        {
+          img: '/img_web/nuevo_dash/matches.jpg',
+          icon: '📅',
+          title: 'Spielplanung',
+          desc: 'Organisieren Sie Turniere, planen Sie Spiele und halten Sie Ihren Liga-Kalender immer auf dem neuesten Stand.',
+        },
+      ],
+    },
+    device: {
+      badge: 'Empfohlenes Gerät',
+      title: 'Entwickelt für',
+      titleAccent: 'Logitech MX Creative',
+      subtitle:
+        'Kombinieren Sie Creative Score mit dem Logitech MX Creative für eine sofortige, haptische Kontrolle über jeden Aspekt Ihrer Anzeigetafel direkt in Ihrer Hand.',
+      bullets: [
+        'Sofortige Punkte-Updates mit einem Dreh',
+        'Benutzerdefinierte Tastenbelegung pro Sportart',
+        'Funktioniert über Bluetooth — keine Kabel am Spielfeldrand',
+        'Haptisches Feedback für sichere Kontrolle ohne hinzusehen',
+        'Kompatibel mit Windows & macOS',
+      ],
+      note: 'Creative Score funktioniert mit jeder Tastatur oder Touch-Gerät. Logitech MX Creative wird für das beste Erlebnis empfohlen.',
+    },
+    screens: {
+      title: 'Funktioniert auf',
+      titleAccent: 'jedem Bildschirm',
+      subtitle:
+        'Ob Beamer, 4K-Display am Spielfeldrand oder Fernseher in der Halle — Creative Score passt sich perfekt jeder Auflösung an.',
+      items: [
+        { label: 'LED-Wände am Spielfeld' },
+        { label: 'Projektoren' },
+        { label: 'Smart-TVs' },
+        { label: '4K-Displays' },
+        { label: 'Zweitmonitore' },
+        { label: 'Browserbasiert' },
+      ],
+    },
+    cta: {
+      title: 'Bereit für das Upgrade?',
+      subtitle:
+        'Fordern Sie einen kostenlosen Test an und erleben Sie Creative Score live. Unser Team unterstützt Sie bei der Einrichtung.',
+      button: 'Kostenlosen Test anfordern',
+      email: 'cristian@xerex.tech',
+      or: 'Kontaktieren Sie unser Team direkt',
+    },
     footer: {
-      rights: '© 2026 Creative Score. Todos los derechos reservados.',
-      tagline: 'Marcadores digitales profesionales para cada cancha.',
+      rights: '© 2026 Creative Score. Alle Rechte vorbehalten.',
+      tagline: 'Professionelle digitale Anzeigetafeln für jedes Spielfeld.',
+    },
+  },
+  pt: {
+    nav: {
+      features: 'Recursos',
+      device: 'Dispositivo',
+      screens: 'Qualquer Tela',
+      demo: 'Pedir Demo',
+    },
+    hero: {
+      badge: 'Plataforma de Placar Digital',
+      title: 'Transforme qualquer',
+      titleAccent: 'Tela em um Placar Profissional',
+      subtitle:
+        'Creative Score é o placar digital em tempo real e totalmente configurável que transforma qualquer tela numa experiência esportiva moderna — sem hardware caro.',
+      cta: 'Pedir Teste Gratuito',
+      ctaSecondary: 'Ver Recursos',
+    },
+    stats: [
+      { value: '∞', label: 'Telas compatíveis' },
+      { value: '10+', label: 'Esportes suportados' },
+      { value: '1-click', label: 'Configuração e sync' },
+    ],
+    features: {
+      title: 'Tudo o que você precisa,',
+      titleAccent: 'nada do que não precisa',
+      subtitle:
+        'Creative Score foi desenhado para velocidade. Configure seu placar em segundos e gerencie cada detalhe em tempo real.',
+      items: [
+        {
+          img: '/img_web/nuevo_dash/canvas_board.jpg',
+          icon: '🎨',
+          title: 'Placar Totalmente Customizável',
+          desc: 'Desenhe o layout, cores e marca do seu placar para combinar com qualquer esporte ou identidade de time.',
+        },
+        {
+          img: '/img_web/nuevo_dash/edit_match.jpg',
+          icon: '⚡',
+          title: 'Sincronização em Tempo Real',
+          desc: 'Pontuação, cronômetro e eventos atualizam instantaneamente em todas as telas conectadas.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_night.jpg',
+          icon: '🖥️',
+          title: 'Painel Admin Intuitivo',
+          desc: 'Gerencie partidas, times e jogadores de uma interface limpa e moderna em qualquer dispositivo.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_light.jpg',
+          icon: '🏆',
+          title: 'Pronto para Multi-Esporte',
+          desc: 'De basquete e futebol a vôlei e mais — uma plataforma para todos os esportes.',
+        },
+        {
+          img: '/img_web/nuevo_dash/teams.jpg',
+          icon: '👥',
+          title: 'Gestão de Times e Jogadores',
+          desc: 'Crie elencos, acompanhe estatísticas e gerencie substituições com facilidade.',
+        },
+        {
+          img: '/img_web/nuevo_dash/matches.jpg',
+          icon: '📅',
+          title: 'Agendamento de Partidas',
+          desc: 'Organize torneios, agende partidas e mantenha o calendário da sua liga sempre atualizado.',
+        },
+      ],
+    },
+    device: {
+      badge: 'Dispositivo Recomendado',
+      title: 'Feito para o',
+      titleAccent: 'Logitech MX Creative',
+      subtitle:
+        'Combine o Creative Score com o Logitech MX Creative e tenha controle tátil instantâneo sobre seu placar direto na sua mão.',
+      bullets: [
+        'Atualização instantânea com um giro do dial',
+        'Mapeamento de botões por esporte',
+        'Conexão Bluetooth — sem cabos na quadra',
+        'Feedback háptico para controle seguro sem olhar',
+        'Compatível com Windows e macOS',
+      ],
+      note: 'Creative Score funciona com qualquer teclado ou touch. Logitech MX Creative é recomendado para a melhor experiência.',
+    },
+    screens: {
+      title: 'Funciona em',
+      titleAccent: 'Qualquer Tela',
+      subtitle:
+        'Seja um projetor, telão de LED ou uma TV comum — Creative Score se adapta perfeitamente a qualquer resolução.',
+      items: [
+        { label: 'Paredes de LED' },
+        { label: 'Projetores' },
+        { label: 'Smart TVs' },
+        { label: 'Telas 4K' },
+        { label: 'Monitores Secundários' },
+        { label: 'Baseado em Navegador' },
+      ],
+    },
+    cta: {
+      title: 'Pronto para dar o upgrade?',
+      subtitle:
+        'Peça um teste gratuito e veja o Creative Score em ação. Nosso time ajuda você na configuração em minutos.',
+      button: 'Pedir Teste Gratuito',
+      email: 'cristian@xerex.tech',
+      or: 'Ou contate nosso time agora',
+    },
+    footer: {
+      rights: '© 2026 Creative Score. Todos os direitos reservados.',
+      tagline: 'Placares digitais profissionais para cada quadra.',
+    },
+  },
+  fr: {
+    nav: {
+      features: 'Fonctions',
+      device: 'Appareil',
+      screens: 'Tous les écrans',
+      demo: 'Démo',
+    },
+    hero: {
+      badge: 'Plateforme de Marquage Numérique',
+      title: 'Transformez n\'importe quel',
+      titleAccent: 'écran en tableau pro',
+      subtitle:
+        'Creative Score est le tableau d\'affichage numérique en temps réel, entièrement ajustable, qui transforme n\'importe quel écran en expérience sportive pro.',
+      cta: 'Essai gratuit',
+      ctaSecondary: 'Voir les fonctions',
+    },
+    stats: [
+      { value: '∞', label: 'Écrans compatibles' },
+      { value: '10+', label: 'Sports supportés' },
+      { value: '1-click', label: 'Lancement et synchro' },
+    ],
+    features: {
+      title: 'Tout ce qu\'il vous faut,',
+      titleAccent: 'rien de superflu',
+      subtitle:
+        'Creative Score est conçu pour la vitesse. Configurez votre tableau en quelques secondes et gérez tout en temps réel.',
+      items: [
+        {
+          img: '/img_web/nuevo_dash/canvas_board.jpg',
+          icon: '🎨',
+          title: 'Tableau personnalisable',
+          desc: 'Adaptez le design, les couleurs et le logo à n\'importe quel sport ou identité d\'équipe.',
+        },
+        {
+          img: '/img_web/nuevo_dash/edit_match.jpg',
+          icon: '⚡',
+          title: 'Synchro en temps réel',
+          desc: 'Scores, temps et événements sont mis à jour instantanément sur tous les écrans connectés.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_night.jpg',
+          icon: '🖥️',
+          title: 'Tableau de bord intuitif',
+          desc: 'Gérez matchs, équipes et joueurs depuis une interface moderne accessible partout.',
+        },
+        {
+          img: '/img_web/nuevo_dash/dash_light.jpg',
+          icon: '🏆',
+          title: 'Multi-Sports',
+          desc: 'Du basket au foot en passant par le volley — une seule plateforme pour tous les sports.',
+        },
+        {
+          img: '/img_web/nuevo_dash/teams.jpg',
+          icon: '👥',
+          title: 'Gestion d\'équipes & joueurs',
+          desc: 'Créez vos listes, suivez les stats et gérez les changements avec facilité.',
+        },
+        {
+          img: '/img_web/nuevo_dash/matches.jpg',
+          icon: '📅',
+          title: 'Planning des matchs',
+          desc: 'Organisez vos tournois et gardez votre calendrier de ligue toujours à jour.',
+        },
+      ],
+    },
+    device: {
+      badge: 'Appareil recommandé',
+      title: 'Conçu pour le',
+      titleAccent: 'Logitech MX Creative',
+      subtitle:
+        'Associez Creative Score avec le Logitech MX Creative pour un contrôle tactile instantané de votre tableau d\'affichage.',
+      bullets: [
+        'Scores mis à jour d\'un seul geste',
+        'Touches personnalisées par sport',
+        'Fonctionne en Bluetooth — sans câbles',
+        'Retour haptique pour un contrôle sans quitter l\'action',
+        'Compatible Windows & macOS',
+      ],
+      note: 'Creative Score fonctionne avec tout clavier ou écran tactile. Logitech MX Creative est recommandé pour la meilleure expérience.',
+    },
+    screens: {
+      title: 'Fonctionne sur',
+      titleAccent: 'n\'importe quel écran',
+      subtitle:
+        'Projecteur, mur de LED ou simple TV — Creative Score s\'adapte parfaitement à toutes les résolutions.',
+      items: [
+        { label: 'Murs LED' },
+        { label: 'Projecteurs' },
+        { label: 'Smart TVs' },
+        { label: 'Écrans 4K' },
+        { label: 'Moniteurs secondaires' },
+        { label: 'Via navigateur' },
+      ],
+    },
+    cta: {
+      title: 'Prêt à passer au niveau pro ?',
+      subtitle:
+        'Demandez un essai gratuit et voyez Creative Score en action. Notre équipe vous installe en quelques minutes.',
+      button: 'Essai gratuit',
+      email: 'cristian@xerex.tech',
+      or: 'Ou contactez directement l\'équipe',
+    },
+    footer: {
+      rights: '© 2026 Creative Score. Tous droits réservés.',
+      tagline: 'Tableaux d\'affichage numériques pro pour chaque terrain.',
     },
   },
 } as const;

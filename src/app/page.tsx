@@ -18,6 +18,8 @@ export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false);
   const t = content[lang];
 
+  const langs: Lang[] = ['en', 'es', 'de', 'pt', 'fr'];
+
   useEffect(() => {
     const handler = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handler);
@@ -69,10 +71,13 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => setLang(lang === 'en' ? 'es' : 'en')}
-              className="glass text-xs font-semibold px-3 py-1.5 rounded-full text-blue-300 hover:bg-blue-500/20 transition-all"
+              onClick={() => {
+                const nextIndex = (langs.indexOf(lang) + 1) % langs.length;
+                setLang(langs[nextIndex]);
+              }}
+              className="glass text-xs font-semibold px-3 py-1.5 rounded-full text-blue-300 hover:bg-blue-500/20 transition-all min-w-[32px]"
             >
-              {lang === 'en' ? 'ES' : 'EN'}
+              {lang.toUpperCase()}
             </button>
             <button 
               onClick={() => window.location.href = '/login'}
