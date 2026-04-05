@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏆 Creative Score
 
-## Getting Started
+**Transform Any Screen into a Professional Digital Scoreboard.**
 
-First, run the development server:
+Creative Score is a real-time, fully configurable digital scoreboard platform designed for elite performance. It turns any display—from classroom projectors to 4K courtside LED walls—into a professional, modern sports experience with zero lag.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🖥️ Optimized for Logitech MX Creative
+Creative Score is built specifically to integrate with the **Logitech Creative Console MX**. This partnership provides the "Elite Standard" for match operation:
+- **Precise Control**: Update scores instantly with the dedicated tactile dial.
+- **Tactile Feedback**: Haptic response for confident, eyes-free control during intense action.
+- **Custom Mapping**: Native support for professional-grade tactile operations.
+- **Low Latency**: Optimized Bluetooth connectivity for professional production environments.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## ✨ Key Features
 
-## Learn More
+- **⚡ Real-Time Synchronization**: Every score, timer, and event updates instantly across all connected displays via WebSocket.
+- **🎨 Fully Customizable Boards**: Design your layouts, colors, and branding to match any sport or team identity.
+- **🏆 Multi-Sport Ready**: Native support for Basketball, Soccer, Volleyball, and more—one platform for every court.
+- **👥 Team & Player Management**: Manage rosters, track statistics, and handle substitutions from an intuitive dashboard.
+- **📅 Match Scheduling**: Organize tournaments and keep your league calendar synchronized.
+- **🌍 Internationalization**: Native support for **English**, **Spanish**, **German**, **Portuguese**, and **French**.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🛠️ Technology Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Creative Score is built with a cutting-edge frontend stack for maximum performance and reliability:
 
-## Deploy on Vercel
+- **Framework**: [Next.js 16 (Turbopack)](https://nextjs.org/)
+- **State Management**: [Zustand](https://zustand-demo.pmnd.rs/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
+- **Backend API**: [Directus SDK v21](https://directus.io/)
+- **Real-time**: WebSocket integration for instant cross-device updates.
+- **Language**: TypeScript
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+---
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 20+
+- npm
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/cristiancazon/creative-score.git
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Setup environment variables:
+   Create a `.env.local` file with your Directus and WebSocket credentials.
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+---
+
+## 📊 Deployment
+
+The project is optimized for production deployment via Docker:
+- `docker-compose.prod.yml` included for easy containerized deployment.
+- Optimized for high-concurrency match environments.
+
+---
+
+## 📄 License
+© 2026 Creative Score. All rights reserved.
+Professional digital scoreboards for every court.
