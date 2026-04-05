@@ -17,10 +17,18 @@ export function HeroSection({ t, scrollTo }: HeroSectionProps) {
 
       <div className="relative z-10 max-w-7xl mx-auto px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
-          <motion.div variants={fadeUp} initial="hidden" animate="visible">
-            <span className="glass-blue inline-block text-cyan-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col items-center gap-4">
+            <span className="glass-blue inline-block text-cyan-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full">
               {t.hero.badge}
             </span>
+            <div className="flex items-center gap-3 glass px-4 py-2 rounded-xl border border-white/10 mb-6">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0c6.627 0 12 5.373 12 12s-5.373 12-12 12-12-5.373-12-12 5.373-12 12-12zm-4.707 14.293l3.293-3.293V18h2v-7l3.293 3.293 1.414-1.414L12 7.586l-5.293 5.293 1.414 1.414z"/>
+              </svg>
+              <span className="text-[10px] md:text-xs font-bold text-slate-300 tracking-wider">
+                {t.hero.logiBadge}
+              </span>
+            </div>
           </motion.div>
 
           <motion.h1

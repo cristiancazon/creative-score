@@ -37,11 +37,17 @@ export function DeviceSection({ t }: DeviceSectionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Text */}
           <Section>
-            <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full mb-6">
-              {t.device.badge}
-            </motion.span>
-            <motion.h2 variants={fadeUp} className="text-4xl sm:text-5xl font-black mb-6 leading-tight">
-              {t.device.title} <span className="text-gradient">{t.device.titleAccent}</span>
+            <div className="flex items-center gap-4 mb-6">
+              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-blue-400" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 0c6.627 0 12 5.373 12 12s-5.373 12-12 12-12-5.373-12-12 5.373-12 12-12zm-4.707 14.293l3.293-3.293V18h2v-7l3.293 3.293 1.414-1.414L12 7.586l-5.293 5.293 1.414 1.414z"/>
+              </svg>
+              <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full">
+                {t.device.badge}
+              </motion.span>
+            </div>
+            <motion.h2 variants={fadeUp} className="text-4xl sm:text-6xl font-black mb-6 leading-tight">
+              {t.device.title} <br />
+              <span className="text-gradient">{t.device.titleAccent}</span>
             </motion.h2>
             <motion.p variants={fadeUp} className="text-gray-400 text-lg leading-relaxed mb-8">
               {t.device.subtitle}

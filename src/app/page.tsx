@@ -97,9 +97,9 @@ export default function LandingPage() {
 
       {/* ── Composer Sections ── */}
       <HeroSection t={t} scrollTo={scrollTo} />
+      <DeviceSection t={t} />
       <StatsBar t={t} />
       <FeaturesSection t={t} />
-      <DeviceSection t={t} />
       <ScreensSection t={t} />
       <ContactSection t={t} />
       <Footer t={t} />
