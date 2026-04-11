@@ -38,17 +38,20 @@ export function DeviceSection({ t }: DeviceSectionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Text */}
           <Section>
-            <div className="flex flex-col gap-6 mb-8">
-              <div className="flex items-center gap-4">
-                <div className="relative w-12 h-12">
+            <div className="flex flex-col gap-8 mb-10">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                <div className="relative w-24 h-24 drop-shadow-[0_0_20px_rgba(255,255,255,0.1)]">
                   <Image src="/img_web/nuevo_dash/nuevas_img/Logitech-Symbol.png" alt="Logitech" fill className="object-contain" />
                 </div>
-                <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-black tracking-[0.2em] uppercase px-5 py-2.5 rounded-full border border-blue-500/30">
-                  {t.hero.logiBadge.replace('🖥️ ', '')}
-                </motion.span>
+                <div className="flex flex-col gap-2">
+                  <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-black tracking-[0.2em] uppercase px-5 py-2.5 rounded-full border border-blue-500/30 w-fit">
+                    {t.hero.logiBadge.replace('🖥️ ', '')}
+                  </motion.span>
+                  <span className="text-blue-400/80 text-[10px] font-bold uppercase tracking-widest pl-1">Official Hardware Optimization</span>
+                </div>
               </div>
               
-              <div className="space-y-2">
+              <div className="space-y-2 text-center sm:text-left">
                 <motion.h2 variants={fadeUp} className="text-5xl sm:text-7xl font-black mb-6 leading-[0.9] tracking-tighter">
                   {t.device.title} <br />
                   <span className="text-gradient drop-shadow-[0_0_30px_rgba(37,99,235,0.3)]">{t.device.titleAccent}</span>

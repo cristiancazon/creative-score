@@ -18,28 +18,35 @@ export function HeroSection({ t, scrollTo }: HeroSectionProps) {
 
       <div className="relative z-10 max-w-7xl mx-auto px-8 text-center">
         <div className="max-w-4xl mx-auto space-y-8">
-          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col items-center gap-4">
-            <div className="flex flex-wrap justify-center items-center gap-4 mb-2">
-              <span className="glass-blue inline-block text-cyan-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full">
+          <motion.div variants={fadeUp} initial="hidden" animate="visible" className="flex flex-col items-center gap-6">
+            <div className="flex flex-wrap justify-center items-center gap-6 mb-2">
+              <span className="glass-blue inline-block text-cyan-300 text-sm font-bold tracking-widest uppercase px-6 py-2.5 rounded-full">
                 {t.hero.badge}
               </span>
-              <div className="glass px-4 py-2 rounded-full border border-white/10 flex items-center gap-2">
-                <div className="relative w-6 h-6">
+              <div className="glass px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-4 bg-white/5 hover:bg-white/10 transition-colors shadow-[0_0_30px_rgba(255,255,255,0.05)]">
+                <div className="relative w-12 h-12">
                   <Image src="/img_web/nuevo_dash/nuevas_img/fiba_logo.png" alt="FIBA" fill className="object-contain" />
                 </div>
-                <span className="text-[10px] md:text-xs font-bold text-slate-300 tracking-wider">
-                  {t.hero.fiba}
-                </span>
+                <div className="flex flex-col items-start leading-none">
+                  <span className="text-[12px] md:text-sm font-black text-white tracking-wider">
+                    {t.hero.fiba}
+                  </span>
+                  <span className="text-[10px] text-slate-400 mt-1 uppercase font-bold tracking-tighter">Certified Regulation</span>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3 glass px-6 py-3 rounded-2xl border border-white/15 mb-6 group hover:border-cyan-500/50 transition-all duration-500 hover:shadow-[0_0_20px_rgba(34,211,238,0.15)] bg-white/5">
-              <div className="relative w-8 h-8">
+            <div className="flex items-center gap-6 glass px-10 py-5 rounded-[2rem] border border-cyan-500/30 mb-8 group hover:border-cyan-400 transition-all duration-500 hover:shadow-[0_0_40px_rgba(34,211,238,0.3)] bg-cyan-950/20 relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative w-16 h-16 transform group-hover:scale-110 transition-transform duration-500">
                 <Image src="/img_web/nuevo_dash/nuevas_img/Logitech-Symbol.png" alt="Logitech" fill className="object-contain" />
               </div>
-              <span className="text-xs md:text-sm font-black text-white tracking-widest uppercase">
-                {t.hero.logiBadge}
-              </span>
+              <div className="flex flex-col items-start relative z-10">
+                <span className="text-sm md:text-base font-black text-white tracking-[0.3em] uppercase drop-shadow-md">
+                  {t.hero.logiBadge}
+                </span>
+                <span className="text-xs text-cyan-400 font-bold tracking-wider">Native Hardware Integration</span>
+              </div>
             </div>
           </motion.div>
 
