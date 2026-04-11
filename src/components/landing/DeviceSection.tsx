@@ -10,6 +10,7 @@ interface DeviceSectionProps {
 }
 
 const mxImages = [
+  '/img_web/nuevo_dash/nuevas_img/creative_console_img.jpeg',
   '/img_web/nuevo_dash/controlmx1.jpg',
   '/img_web/nuevo_dash/controlmx2.jpg',
   '/img_web/nuevo_dash/controlmx3.jpg',
@@ -27,7 +28,7 @@ export function DeviceSection({ t }: DeviceSectionProps) {
   const [mxSlide, setMxSlide] = useState(0);
 
   useEffect(() => {
-    const id = setInterval(() => setMxSlide((s) => (s + 1) % mxImages.length), 3000);
+    const id = setInterval(() => setMxSlide((s) => (s + 1) % mxImages.length), 4000);
     return () => clearInterval(id);
   }, []);
 
@@ -37,19 +38,25 @@ export function DeviceSection({ t }: DeviceSectionProps) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           {/* Text */}
           <Section>
-            <div className="flex items-center gap-4 mb-6">
-              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-blue-400" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 0c6.627 0 12 5.373 12 12s-5.373 12-12 12-12-5.373-12-12 5.373-12 12-12zm-4.707 14.293l3.293-3.293V18h2v-7l3.293 3.293 1.414-1.414L12 7.586l-5.293 5.293 1.414 1.414z"/>
-              </svg>
-              <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-semibold tracking-widest uppercase px-4 py-2 rounded-full">
-                {t.device.badge}
-              </motion.span>
+            <div className="flex flex-col gap-6 mb-8">
+              <div className="flex items-center gap-4">
+                <div className="relative w-12 h-12">
+                  <Image src="/img_web/nuevo_dash/nuevas_img/Logitech-Symbol.png" alt="Logitech" fill className="object-contain" />
+                </div>
+                <motion.span variants={fadeUp} className="glass-blue inline-block text-blue-300 text-xs font-black tracking-[0.2em] uppercase px-5 py-2.5 rounded-full border border-blue-500/30">
+                  {t.hero.logiBadge.replace('🖥️ ', '')}
+                </motion.span>
+              </div>
+              
+              <div className="space-y-2">
+                <motion.h2 variants={fadeUp} className="text-5xl sm:text-7xl font-black mb-6 leading-[0.9] tracking-tighter">
+                  {t.device.title} <br />
+                  <span className="text-gradient drop-shadow-[0_0_30px_rgba(37,99,235,0.3)]">{t.device.titleAccent}</span>
+                </motion.h2>
+              </div>
             </div>
-            <motion.h2 variants={fadeUp} className="text-4xl sm:text-6xl font-black mb-6 leading-tight">
-              {t.device.title} <br />
-              <span className="text-gradient">{t.device.titleAccent}</span>
-            </motion.h2>
-            <motion.p variants={fadeUp} className="text-gray-400 text-lg leading-relaxed mb-8">
+
+            <motion.p variants={fadeUp} className="text-gray-400 text-xl leading-relaxed mb-10 max-w-xl">
               {t.device.subtitle}
             </motion.p>
             <motion.ul variants={stagger} className="space-y-3 mb-8">

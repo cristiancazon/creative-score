@@ -23,16 +23,35 @@ export function FeaturesSection({ t }: FeaturesSectionProps) {
           <motion.div
             key={feat.title}
             variants={fadeUp}
-            className="glass rounded-2xl overflow-hidden card-hover"
+            className={`glass rounded-2xl overflow-hidden card-hover border-white/5 relative group ${feat.premium ? 'glow border-cyan-500/30' : ''}`}
           >
-            <div className="relative h-44 overflow-hidden">
-              <Image src={feat.img} alt={feat.title} fill className="object-cover" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#050a15] via-transparent to-transparent" />
-              <div className="absolute top-3 left-3 text-2xl">{feat.icon}</div>
+            {feat.premium && (
+              <div className="absolute top-3 right-3 z-20">
+                <span className="bg-gradient-to-r from-amber-400 to-orange-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full text-white shadow-lg shadow-orange-500/20">
+                  Premium
+                </span>
+              </div>
+            )}
+            <div className="relative h-52 overflow-hidden">
+              <Image 
+                src={feat.img} 
+                alt={feat.title} 
+                fill 
+                className="object-cover group-hover:scale-110 transition-transform duration-700" 
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#050a15] via-[#050a15]/20 to-transparent opacity-80" />
+              <div className="absolute bottom-4 left-4 text-3xl drop-shadow-lg">{feat.icon}</div>
             </div>
-            <div className="p-5">
-              <h3 className="font-bold text-lg text-white mb-2">{feat.title}</h3>
-              <p className="text-gray-400 text-sm leading-relaxed">{feat.desc}</p>
+            <div className="p-6 relative">
+              {feat.premium && (
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-400 to-blue-600" />
+              )}
+              <h3 className={`font-bold text-xl mb-2 ${feat.premium ? 'text-cyan-300' : 'text-white'}`}>
+                {feat.title}
+              </h3>
+              <p className="text-gray-400 text-sm leading-relaxed antialiased">
+                {feat.desc}
+              </p>
             </div>
           </motion.div>
         ))}
