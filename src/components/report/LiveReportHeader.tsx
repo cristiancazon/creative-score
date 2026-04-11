@@ -16,7 +16,7 @@ export function LiveReportHeader({ match, homeTeam, awayTeam, timerSeconds }: He
     const isFinished = match.status === 'finished';
     
     const minutes = Math.floor(timerSeconds / 60);
-    const seconds = timerSeconds % 60;
+    const seconds = Math.floor(timerSeconds % 60);
     const timeStr = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
     return (
