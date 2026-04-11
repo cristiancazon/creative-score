@@ -122,9 +122,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <NavItem href="/admin/text-ads" icon={<MessageSquare size={20} />} label="Text Ads" isOpen={sidebarOpen} />
                     <NavItem href="/admin/video-ads" icon={<Video size={20} />} label="Video Ads" isOpen={sidebarOpen} />
 
-                    {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Visuals</div>}
-                    {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}
-                    <NavItem href="/admin/animations" icon={<Zap size={20} />} label="Animations" isOpen={sidebarOpen} />
 
                     {sidebarOpen && <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mt-6 mb-2 px-4 transition-opacity duration-300">Resources</div>}
                     {!sidebarOpen && <div className="h-6 mt-6 mb-2" />}

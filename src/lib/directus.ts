@@ -44,3 +44,8 @@ export const directus = createDirectus<Schema>(DIRECTUS_URL)
   }))
   .with(rest())
   .with(realtime());
+
+export function getFileUrl(fileId: string) {
+  if (!fileId) return '';
+  return `${DIRECTUS_URL}/assets/${fileId}`;
+}

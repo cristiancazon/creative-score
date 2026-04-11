@@ -609,11 +609,18 @@ export default function ControlPage() {
                 </div>
                 <div className="flex items-center gap-4">
                     <button 
+                        onClick={() => window.open(`/report/${match.id}/visual`, '_blank')}
+                        className="px-4 py-1.5 rounded-lg text-sm font-bold bg-cyan-600 hover:bg-cyan-500 transition-colors flex items-center gap-2 shadow-lg shadow-cyan-900/20"
+                        title="Open Visual Live Report Tracking"
+                    >
+                        🌐 Live Visual Report
+                    </button>
+                    <button 
                         onClick={() => window.open(`/report/${match.id}`, '_blank')}
-                        className="px-4 py-1.5 rounded-lg text-sm font-bold bg-indigo-600 hover:bg-indigo-500 transition-colors flex items-center gap-2"
+                        className="px-4 py-1.5 rounded-lg text-sm font-bold bg-slate-700 hover:bg-slate-600 transition-colors flex items-center gap-2"
                         title="Generate Official Match Report (A4 PDF)"
                     >
-                        📋 Print Match Report
+                        📋 PDF Report
                     </button>
                     <span className={`px-3 py-1.5 rounded-full text-sm font-bold ${isRunning ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
                         {isRunning ? 'LIVE' : 'PAUSED'}
